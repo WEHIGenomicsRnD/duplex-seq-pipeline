@@ -1,0 +1,22 @@
+from snakemake.utils import min_version
+
+#------------- min snakemake version ------------
+min_version('6.7.0')
+
+#------------- setup ------------
+configfile: 'config/config.yaml'
+
+report: 'report/workflow.rst'
+
+#------------- load rules ------------
+
+include: 'rules/common.smk'
+include: 'rules/preprocess.smk'
+include: 'rules/umi.smk'
+include: 'rules/align.smk'
+include: 'rules/consensus.smk'
+
+#------------- workflow ------------
+rule all:
+    input:
+        get_filtered_consensus_output()
