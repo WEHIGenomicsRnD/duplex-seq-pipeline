@@ -15,8 +15,11 @@ include: 'rules/preprocess.smk'
 include: 'rules/umi.smk'
 include: 'rules/align.smk'
 include: 'rules/consensus.smk'
+include: 'rules/qc.smk'
+include: 'rules/variants.smk'
 
 #------------- workflow ------------
 rule all:
     input:
-        get_filtered_consensus_output()
+        get_varcall_output(),
+        'results/QC/multiQC/multiqc_report.html'

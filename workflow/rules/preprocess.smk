@@ -14,7 +14,7 @@ rule convert_to_unmapped_bam:
         1
     resources:
         mem_mb=32768,
-        runtime='0-12:0:0'
+        runtime='1-0:0:0'
     shell:
         '''
         FastqToSam \

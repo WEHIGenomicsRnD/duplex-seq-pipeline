@@ -1,3 +1,6 @@
+# config file for Fastq Screen
+FastqScreen_config: config/fastq_screen.conf
+
 # reference genome fasta
 ref: 'ref/Ecoli_strain_BL21_genome.fasta' 
 
@@ -55,3 +58,6 @@ min_base_quality: 50
 # Maximum fraction of no-calls in the read after filtering
 # used in fgbio's FilterConsensusReads ( --max-no-call-fraction)
 max_no_call_fraction: 0.05
+
+# minimum VAF to call using VarScan
+min_vaf: 0.000001
