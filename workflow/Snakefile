@@ -22,4 +22,5 @@ include: 'rules/variants.smk'
 rule all:
     input:
         get_varcall_output(),
-        'results/QC/multiQC/multiqc_report.html'
+        'results/QC/multiQC/multiqc_report.html',
+        'results/QC/consensus/multiQC/multiqc_report.html'
