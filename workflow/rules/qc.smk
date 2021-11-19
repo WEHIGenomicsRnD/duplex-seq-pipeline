@@ -134,7 +134,7 @@ rule multiQC:
 
 rule samtools_stats_consensus:
     input:
-        'results/consensus/{sample}_consensus_mapped_merged.bam'
+        'results/consensus/{sample}_consensus_mapped_merged_filtered.bam'
     output:
         stats='results/QC/consensus/samtools/stats/{sample}.txt',
         flagstat='results/QC/consensus/samtools/flagstat/{sample}.txt',
@@ -157,7 +157,7 @@ rule samtools_stats_consensus:
 
 rule qualimap_consensus:
     input:
-        'results/consensus/{sample}_consensus_mapped_merged.bam'
+        'results/consensus/{sample}_consensus_mapped_merged_filtered.bam'
     output:
         'results/QC/consensus/qualimap/{sample}/qualimapReport.html'
     log:
