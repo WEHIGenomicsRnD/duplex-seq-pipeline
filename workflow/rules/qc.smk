@@ -58,7 +58,7 @@ rule samtools_stats:
     envmodules:
         'samtools/1.19'
     conda:
-        '../envs/samtools.yaml'
+        '../envs/bwa_samtools.yaml'
     threads:
         1
     resources:
@@ -143,7 +143,7 @@ rule samtools_stats_consensus:
     envmodules:
         'samtools/1.19'
     conda:
-        '../envs/samtools.yaml'
+        '../envs/bwa_samtools.yaml'
     threads:
         1
     resources:

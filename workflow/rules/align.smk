@@ -30,7 +30,7 @@ rule align:
     log:
         'logs/align_{sample}.log'
     conda:
-        '../envs/bwa.yaml'
+        '../envs/bwa_samtools.yaml'
     envmodules:
         'bwa/0.7.17'
     threads:
@@ -40,7 +40,7 @@ rule align:
         runtime='0-12:0:0'
     shell:
         '''
-        bwa mem -p -t {threads} {config[ref]} {input} > {output}
+        bwa mem -p -t {threads} {config[ref]} {input} | samtools view -bS - > {output}
         '''
 
 rule merge_bam_alignment:
@@ -106,7 +106,7 @@ rule remap_align:
     log:
         'logs/remap_align_{sample}.log'
     conda:
-        '../envs/bwa.yaml'
+        '../envs/bwa_samtools.yaml'
     envmodules:
         'bwa/0.7.17'
     threads:
@@ -116,7 +116,7 @@ rule remap_align:
         runtime='0-12:0:0'
     shell:
         '''
-        bwa mem -p -t {threads} {config[ref]} {input} > {output}
+        bwa mem -p -t {threads} {config[ref]} {input} | samtools view -bS - > {output}
         '''
 
 rule remap_merge_bam_alignment:
