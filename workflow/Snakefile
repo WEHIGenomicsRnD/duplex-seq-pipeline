@@ -12,11 +12,16 @@ report: 'report/workflow.rst'
 
 include: 'rules/common.smk'
 include: 'rules/preprocess.smk'
-include: 'rules/umi.smk'
 include: 'rules/align.smk'
 include: 'rules/consensus.smk'
 include: 'rules/qc.smk'
 include: 'rules/variants.smk'
+
+if config['umis'] != '':
+    include: 'rules/umi_correct.smk'
+else:
+    include: 'rules/umi.smk'
+
 
 #------------- workflow ------------
 rule all:

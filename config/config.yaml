@@ -4,11 +4,25 @@ FastqScreen_config: config/fastq_screen.conf
 # reference genome fasta
 ref: 'ref/Ecoli_strain_BL21_genome.fasta' 
 
+# file of UMI sequences, one per line
+# set to empty string if UMIs are unknown
+# used to correct UMI sequences
+umis: 'metadata/umis.txt'
+
+# max number of UMI mismatches
+# used only if correcting UMIs
+max_mismatches: 3
+
+# min distance in mismatches to next best UMI
+# used only if correcting UMIs
+min_distance: 1
+
 # read structure for each strand, e.g.
 # 3M2S146T = 3 UMI, 2 skipped, 146 read
 # bases (--read-structure argument used
 # by fgbio's ExtractUmisFromBam)
-read_structure: '3M2S146T 3M2S146T'
+#read_structure: '3M2S146T 3M2S146T'
+read_structure: '8M143T 8M143T'
 
 # SAM tag(s) in which to store the molecular
 # indices (--molecular-index-tag argument used by
