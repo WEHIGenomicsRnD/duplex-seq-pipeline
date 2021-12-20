@@ -13,7 +13,7 @@ for f in base:
 
 def get_varcall_output():
     output = expand(
-        'results/variants/{sample}.tsv',
+        'results/variants/{sample}.vcf',
         sample=samples
     )
     return output

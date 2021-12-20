@@ -8,6 +8,7 @@ ref: 'ref/Ecoli_strain_BL21_genome.fasta'
 # set to empty string if UMIs are unknown
 # used to correct UMI sequences
 umis: 'metadata/umis.txt'
+#umis: ''
 
 # max number of UMI mismatches
 # used only if correcting UMIs
@@ -75,3 +76,6 @@ max_no_call_fraction: 0.05
 
 # minimum VAF to call using VarScan
 min_vaf: 0.000001
+
+# p-value minimum threshold for VarScan
+pvalue: 0.99

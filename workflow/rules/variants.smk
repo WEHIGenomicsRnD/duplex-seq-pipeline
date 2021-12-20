@@ -27,7 +27,7 @@ rule varscan:
     input:
         'results/consensus/{sample}_consensus_mapped_merged_filtered_clipped.bam'
     output:
-        'results/variants/{sample}.tsv'
+        'results/variants/{sample}.vcf'
     log:
         'logs/varscan_{sample}.log'
     envmodules:
@@ -43,8 +43,10 @@ rule varscan:
     shell:
         '''
         samtools mpileup -f {config[ref]} {input} | \
-            varscan pileup2snp -Xmx{resources.mem_mb} \
+            varscan mpileup2snp -Xmx{resources.mem_mb} \
             --min-coverage 1 \
             --min-reads2 1 \
-            --min-var-freq {config[min_vaf]} > {output}
+            --min-var-freq {config[min_vaf]} \
+            --p-value {config[pvalue]} \
+            --output-vcf 1 > {output}
         '''
