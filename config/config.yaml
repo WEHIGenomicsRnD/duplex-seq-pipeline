@@ -79,3 +79,9 @@ min_vaf: 0.000001
 
 # p-value minimum threshold for VarScan
 pvalue: 0.99
+
+# whether to run checkm (microbial samples only)
+check_contamination: False
+
+# maximum read length (used for assembly for contamination step only)
+max_rd_len: 151
