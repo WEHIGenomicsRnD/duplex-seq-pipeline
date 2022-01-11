@@ -24,3 +24,10 @@ def get_qualimap_output():
         sample=samples
     )
     return output
+
+def get_assembly_output():
+    output = expand(
+        'results/QC/checkm/assembly/{sample}.contig',
+        sample=samples
+    )
+    return output

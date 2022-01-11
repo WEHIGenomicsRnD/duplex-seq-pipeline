@@ -34,6 +34,7 @@ if check_contamination:
     rule all:
         input:
             get_varcall_output(),
+            get_assembly_output(),
             'results/QC/checkm/stats.txt',
             'results/QC/multiQC/multiqc_report.html',
             'results/QC/consensus/multiQC/multiqc_report.html'
@@ -42,4 +43,4 @@ else:
         input:
             get_varcall_output(),
             'results/QC/multiQC/multiqc_report.html',
-            'results/QC/consensus/multiQC/multiqc_report.html',
+            'results/QC/consensus/multiQC/multiqc_report.html'
