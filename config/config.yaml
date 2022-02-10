@@ -7,8 +7,8 @@ ref: 'ref/Ecoli_strain_BL21_genome.fasta'
 # file of UMI sequences, one per line
 # set to empty string if UMIs are unknown
 # used to correct UMI sequences
-umis: 'metadata/umis.txt'
-#umis: ''
+#umis: 'metadata/umis.txt'
+umis: ''
 
 # max number of UMI mismatches
 # used only if correcting UMIs
@@ -79,9 +79,6 @@ min_vaf: 0.000001
 
 # p-value minimum threshold for VarScan
 pvalue: 0.99
-
-# whether to run checkm (microbial samples only)
-check_contamination: False
 
 # maximum read length (used for assembly for contamination step only)
 max_rd_len: 151

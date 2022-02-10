@@ -8,8 +8,6 @@ configfile: 'config/config.yaml'
 
 report: 'report/workflow.rst'
 
-check_contamination = bool(config['check_contamination'])
-
 #------------- load rules ------------
 
 include: 'rules/common.smk'
@@ -19,9 +17,6 @@ include: 'rules/consensus.smk'
 include: 'rules/qc.smk'
 include: 'rules/variants.smk'
 
-if check_contamination:
-    include: 'rules/contamination.smk'
-
 if config['umis'] != '':
     include: 'rules/umi_correct.smk'
 else:
@@ -30,17 +25,8 @@ else:
 
 #------------- workflow ------------
 
-if check_contamination:
-    rule all:
-        input:
-            get_varcall_output(),
-            get_assembly_output(),
-            'results/QC/checkm/stats.txt',
-            'results/QC/multiQC/multiqc_report.html',
-            'results/QC/consensus/multiQC/multiqc_report.html'
-else:
-    rule all:
-        input:
-            get_varcall_output(),
-            'results/QC/multiQC/multiqc_report.html',
-            'results/QC/consensus/multiQC/multiqc_report.html'
+rule all:
+    input:
+        get_varcall_output(),
+        'results/QC/multiQC/multiqc_report.html',
+        'results/QC/consensus/multiQC/multiqc_report.html'
