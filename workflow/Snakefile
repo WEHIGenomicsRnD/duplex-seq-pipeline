@@ -1,32 +1,31 @@
 from snakemake.utils import min_version
 
-#------------- min snakemake version ------------
-min_version('6.7.0')
-
-#------------- setup ------------
-configfile: 'config/config.yaml'
-
-report: 'report/workflow.rst'
-
-#------------- load rules ------------
-
-include: 'rules/common.smk'
-include: 'rules/preprocess.smk'
-include: 'rules/align.smk'
-include: 'rules/consensus.smk'
-include: 'rules/qc.smk'
-include: 'rules/variants.smk'
-
-if config['umis'] != '':
-    include: 'rules/umi_correct.smk'
-else:
-    include: 'rules/umi.smk'
+# ------------- min snakemake version ------------
+min_version("6.7.0")
 
 
-#------------- workflow ------------
+# ------------- setup ------------
+configfile: "config/config.yaml"
+
+
+report: "report/workflow.rst"
+
+
+# ------------- load rules ------------
+
+
+include: "rules/common.smk"
+include: "rules/preprocess.smk"
+include: "rules/consensus.smk"
+include: "rules/qc.smk"
+include: "rules/variants.smk"
+
+
+# ------------- workflow ------------
+
 
 rule all:
     input:
         get_varcall_output(),
-        'results/QC/multiQC/multiqc_report.html',
-        'results/QC/consensus/multiQC/multiqc_report.html'
+        "results/QC/multiQC/multiqc_report.html",
+        "results/QC/consensus/multiQC/multiqc_report.html",

@@ -1,52 +1,56 @@
 rule clip_bam:
     input:
-        'results/consensus/{sample}_consensus_mapped_merged_filtered.bam'
+        bam="results/consensus/{sample}_consensus_mapped_merged_filtered.bam",
+        ref=config["ref"],
     output:
-        'results/consensus/{sample}_consensus_mapped_merged_filtered_clipped.bam'
+        "results/consensus/{sample}_consensus_mapped_merged_filtered_clipped.bam",
     log:
-        'logs/clip_bam_{sample}.log'
+        "logs/clip_bam_{sample}.log",
     conda:
-        '../envs/fgbio.yaml'
-    threads:
-        1
+        "../envs/fgbio.yaml"
+    threads: 1
     resources:
         mem_mb=32768,
-        runtime='0-12:0:0'
+        runtime="0-12:0:0",
     shell:
-        '''
+        """
         fgbio -Xmx{resources.mem_mb}m \
             ClipBam \
-            --input={input} \
+            --input={input.bam} \
             --output={output} \
-            --ref {config[ref]} \
+            --ref {input.ref} \
             --clipping-mode=Hard \
             --clip-overlapping-reads=true
-        '''
+        """
+
 
 rule varscan:
     input:
-        'results/consensus/{sample}_consensus_mapped_merged_filtered_clipped.bam'
+        bam="results/consensus/{sample}_consensus_mapped_merged_filtered_clipped.bam",
+        ref=config["ref"],
     output:
-        'results/variants/{sample}.vcf'
+        "results/variants/{sample}.vcf",
     log:
-        'logs/varscan_{sample}.log'
+        "logs/varscan_{sample}.log",
     envmodules:
-        'samtools/1.9',
-        'varscan/2.3.9'
+        "samtools/1.9",
+        "varscan/2.3.9",
     conda:
-        '../envs/varscan.yaml'
-    threads:
-        1
+        "../envs/varscan.yaml"
+    threads: 1
     resources:
         mem_mb=32768,
-        runtime='1-0:0:0'
+        runtime="1-0:0:0",
+    params:
+        min_vaf=config["min_vaf"],
+        pvalue=config["pvalue"],
     shell:
-        '''
-        samtools mpileup -f {config[ref]} {input} | \
+        """
+        samtools mpileup -f {input.ref} {input.bam} | \
             varscan mpileup2snp -Xmx{resources.mem_mb} \
             --min-coverage 1 \
             --min-reads2 1 \
-            --min-var-freq {config[min_vaf]} \
-            --p-value {config[pvalue]} \
+            --min-var-freq {params.min_vaf} \
+            --p-value {params.pvalue} \
             --output-vcf 1 > {output}
-        '''
+        """
