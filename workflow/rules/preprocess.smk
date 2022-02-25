@@ -29,7 +29,7 @@ rule extract_umis:
     input:
         "results/unmapped_bams/{sample}_unmapped.bam",
     output:
-        "results/unmapped_bams/{sample}_unmapped_{umi_postfix}UMI.bam".format(
+        "results/unmapped_bams/{sample}_unmapped_{umi_postfix}wUMI.bam".format(
             sample="{sample}", umi_postfix=umi_postfix
         ),
     log:
@@ -59,7 +59,7 @@ if correct_umis:
 
     rule correct_umis:
         input:
-            bam="results/unmapped_bams/{sample}_unmapped_uncorrected_UMI.bam",
+            bam="results/unmapped_bams/{sample}_unmapped_uncorrected_wUMI.bam",
             umis=config["umis"],
         output:
             "results/unmapped_bams/{sample}_unmapped_wUMI.bam",
