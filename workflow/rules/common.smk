@@ -15,6 +15,12 @@ correct_umis = config["umis"] != ""
 umi_postfix = "uncorrected_" if correct_umis else ""
 
 
+def get_create_dict_output():
+    basename = os.path.splitext(config["ref"])[0]
+    output = f"{basename}.dict"
+    return output
+
+
 def get_varcall_output():
     output = expand("results/variants/{sample}.vcf", sample=samples)
     return output

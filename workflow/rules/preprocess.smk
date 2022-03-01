@@ -1,3 +1,24 @@
+rule create_dict:
+    input:
+        config["ref"],
+    output:
+        get_create_dict_output(),
+    log:
+        "logs/create_dict.log",
+    conda:
+        "../envs/picard.yaml"
+    threads: 1
+    resources:
+        mem_mb=32768,
+        runtime="1-0:0:0",
+    shell:
+        """
+        picard -Xmx{resources.mem_mb}m CreateSequenceDictionary \
+            R={input} \
+            O={output}
+        """
+
+
 rule convert_to_unmapped_bam:
     input:
         r1="fastq/{sample}_R1.fastq.gz",
