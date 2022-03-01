@@ -15,7 +15,8 @@ rule create_dict:
         """
         picard -Xmx{resources.mem_mb}m CreateSequenceDictionary \
             R={input} \
-            O={output}
+            O={output} \
+            TMP_DIR={resources.tmpdir}
         """
 
 
@@ -40,7 +41,8 @@ rule convert_to_unmapped_bam:
             F2={input.r2} \
             O={output} \
             SM={wildcards.sample} \
-            RG=null
+            RG=null \
+            TMP_DIR={resources.tmpdir}
         """
 
 
@@ -122,7 +124,8 @@ rule bam_to_fastq:
         picard -Xmx{resources.mem_mb}m SamToFastq \
             I={input} \
             F={output} \
-            INTERLEAVE=true
+            INTERLEAVE=true \
+            TMP_DIR={resources.tmpdir}
         """
 
 
@@ -174,7 +177,8 @@ rule merge_bam_alignment:
                 ALIGNER_PROPER_PAIR_FLAGS=true \
                 MAX_GAPS=-1 \
                 ORIENTATIONS=FR \
-                CREATE_INDEX=true
+                CREATE_INDEX=true \
+                TMP_DIR={resources.tmpdir}
         """
 
 

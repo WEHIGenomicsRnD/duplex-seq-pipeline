@@ -71,7 +71,8 @@ rule remap_sam_to_fastq:
         picard -Xmx{resources.mem_mb}m SamToFastq \
             I={input} \
             F={output} \
-            INTERLEAVE=true
+            INTERLEAVE=true \
+            TMP_DIR={resources.tmpdir}
         """
 
 
@@ -123,7 +124,8 @@ rule remap_merge_bam_alignment:
                 ALIGNER_PROPER_PAIR_FLAGS=true \
                 MAX_GAPS=-1 \
                 ORIENTATIONS=FR \
-                CREATE_INDEX=true
+                CREATE_INDEX=true \
+                TMP_DIR={resources.tmpdir}
         """
 
 
