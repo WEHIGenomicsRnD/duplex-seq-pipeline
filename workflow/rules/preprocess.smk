@@ -6,8 +6,6 @@ rule convert_to_unmapped_bam:
         "results/unmapped_bams/{sample}_unmapped.bam",
     log:
         "logs/convert_to_unmapped_bam_{sample}.log",
-    envmodules:
-        "picard-tools/2.20.2",
     conda:
         "../envs/picard.yaml"
     threads: 1
@@ -16,7 +14,7 @@ rule convert_to_unmapped_bam:
         runtime="1-0:0:0",
     shell:
         """
-        FastqToSam \
+        picard -Xmx{resources.mem_mb}m FastqToSam \
             F1={input.r1} \
             F2={input.r2} \
             O={output} \
@@ -94,15 +92,13 @@ rule bam_to_fastq:
         "logs/sam_to_fastq_{sample}.log",
     conda:
         "../envs/picard.yaml"
-    envmodules:
-        "picard-tools/2.20.2",
     threads: 1
     resources:
         mem_mb=32768,
         runtime="0-12:0:0",
     shell:
         """
-        SamToFastq \
+        picard -Xmx{resources.mem_mb}m SamToFastq \
             I={input} \
             F={output} \
             INTERLEAVE=true
@@ -142,15 +138,13 @@ rule merge_bam_alignment:
         "logs/merge_bam_alignment_{sample}.log",
     conda:
         "../envs/picard.yaml"
-    envmodules:
-        "picard-tools/2.20.2",
     threads: 1
     resources:
         mem_mb=32768,
         runtime="0-12:0:0",
     shell:
         """
-        MergeBamAlignment \
+        picard -Xmx{resources.mem_mb}m MergeBamAlignment \
                 UNMAPPED={input.unmapped} \
                 ALIGNED={input.mapped} \
                 O={output} \
@@ -173,15 +167,13 @@ rule mark_duplicates:
         "logs/mark_duplicates_{sample}.log",
     conda:
         "../envs/picard.yaml"
-    envmodules:
-        "picard-tools/2.20.2",
     threads: 1
     resources:
         mem_mb=32768,
         runtime="0-12:0:0",
     shell:
         """
-        MarkDuplicates \
+        picard -Xmx{resources.mem_mb}m MarkDuplicates \
             I={input} \
             O={output.bam} \
             M={output.metrics}

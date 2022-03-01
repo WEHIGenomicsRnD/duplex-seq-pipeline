@@ -62,15 +62,13 @@ rule remap_sam_to_fastq:
         "logs/remap_sam_to_fastq_{sample}.log",
     conda:
         "../envs/picard.yaml"
-    envmodules:
-        "picard-tools/2.20.2",
     threads: 1
     resources:
         mem_mb=32768,
         runtime="0-12:0:0",
     shell:
         """
-        SamToFastq \
+        picard -Xmx{resources.mem_mb}m SamToFastq \
             I={input} \
             F={output} \
             INTERLEAVE=true
@@ -110,15 +108,13 @@ rule remap_merge_bam_alignment:
         "logs/remap_merge_bam_alignment_{sample}.log",
     conda:
         "../envs/picard.yaml"
-    envmodules:
-        "picard-tools/2.20.2",
     threads: 1
     resources:
         mem_mb=32768,
         runtime="0-12:0:0",
     shell:
         """
-        MergeBamAlignment \
+        picard -Xmx{resources.mem_mb}m MergeBamAlignment \
                 UNMAPPED={input.unmapped} \
                 ALIGNED={input.mapped} \
                 O={output} \
@@ -160,7 +156,7 @@ rule filter_consensus_reads:
             --ref {input.ref} \
             --min-reads={params.min_reads} \
             --max-read-error-rate={params.max_read_error_rate} \
-            --max-base-error-rate={params.min_base_error_rate} \
+            --max-base-error-rate={params.max_base_error_rate} \
             --min-base-quality={params.min_base_quality} \
             --max-no-call-fraction={params.max_no_call_fraction}
         """
