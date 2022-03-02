@@ -67,7 +67,9 @@ rule extract_umis:
         single_tag=config["single_tag"],
     shell:
         """
-        fgbio ExtractUmisFromBam \
+        fgbio -Xmx{resources.mem_mb}m \
+            -Djava.io.tmpdir={resources.tmpdir} \
+            ExtractUmisFromBam \
             --input={input} \
             --output={output} \
             --read-structure={params.read_structure} \
@@ -97,7 +99,9 @@ if correct_umis:
             min_distance=config["min_distance"],
         shell:
             """
-            fgbio CorrectUmis \
+            fgbio -Xmx{resources.mem_mb}m \
+                -Djava.io.tmpdir={resources.tmpdir} \
+                CorrectUmis \
                 --input={input.bam} \
                 --output={output} \
                 --max-mismatches={params.max_mismatches} \
@@ -201,5 +205,6 @@ rule mark_duplicates:
         picard -Xmx{resources.mem_mb}m MarkDuplicates \
             I={input} \
             O={output.bam} \
-            M={output.metrics}
+            M={output.metrics} \
+            TMP_DIR={resources.tmpdir}
         """

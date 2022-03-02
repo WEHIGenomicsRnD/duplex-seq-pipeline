@@ -15,7 +15,9 @@ rule group_reads_by_umi:
         min_mapq=config["min_mapq"],
     shell:
         """
-        fgbio GroupReadsByUmi \
+        fgbio -Xmx{resources.mem_mb}m \
+            -Djava.io.tmpdir={resources.tmpdir} \
+            GroupReadsByUmi \
             --input={input} \
             --output={output} \
             --strategy=paired \
@@ -44,6 +46,7 @@ rule call_duplex_consensus:
     shell:
         """
         fgbio -Xmx{resources.mem_mb}m \
+            -Djava.io.tmpdir={resources.tmpdir} \
             CallDuplexConsensusReads \
             --input={input} \
             --output={output} \
@@ -152,6 +155,7 @@ rule filter_consensus_reads:
     shell:
         """
         fgbio -Xmx{resources.mem_mb}m \
+            -Djava.io.tmpdir={resources.tmpdir} \
             FilterConsensusReads \
             --input={input.bam} \
             --output={output} \
