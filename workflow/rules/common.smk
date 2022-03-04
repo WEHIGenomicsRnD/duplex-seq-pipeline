@@ -26,6 +26,6 @@ def get_varcall_output():
     return output
 
 
-def get_qualimap_output():
-    output = expand("results/QC/qualimap/{sample}/qualimapReport.html", sample=samples)
+def get_calc_rinfo_output():
+    output = expand("results/QC/read_info/{sample}.txt", sample=samples)
     return output

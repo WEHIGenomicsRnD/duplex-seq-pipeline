@@ -28,5 +28,6 @@ rule all:
     input:
         get_create_dict_output(),
         get_varcall_output(),
+        get_calc_rinfo_output(),
         "results/QC/multiQC/multiqc_report.html",
         "results/QC/consensus/multiQC/multiqc_report.html",

@@ -15,6 +15,7 @@ rule clip_bam:
     shell:
         """
         fgbio -Xmx{resources.mem_mb}m \
+            -Djava.io.tmpdir={resources.tmpdir} \
             ClipBam \
             --input={input.bam} \
             --output={output} \

@@ -201,3 +201,20 @@ rule multiQC_consensus:
             results/QC/consensus/samtools/ \
             -o results/QC/consensus/multiQC -f
         """
+
+
+rule calculate_read_info:
+    input:
+        "results/mapped_bams/{sample}_mapped_merged.bam",
+    conda:
+        "../envs/get_read_info.yaml"
+    threads: 1
+    resources:
+        mem_mb=131072,
+        runtime="1-0:0:0",
+    log:
+        "logs/calculate_read_info_{sample}.log",
+    output:
+        "results/QC/read_info/{sample}.txt",
+    script:
+        "../scripts/calculate_read_info.py"

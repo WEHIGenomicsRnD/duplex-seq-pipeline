@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python
+  - seaborn
+  - numpy
+  - pandas
+  - pysam
