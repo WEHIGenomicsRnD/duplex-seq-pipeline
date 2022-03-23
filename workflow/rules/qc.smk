@@ -210,11 +210,11 @@ rule calculate_read_info:
         "../envs/get_read_info.yaml"
     threads: 1
     resources:
-        mem_mb=131072,
+        mem_mb=196608,
         runtime="1-0:0:0",
     log:
         "logs/calculate_read_info_{sample}.log",
     output:
-        "results/QC/read_info/{sample}.txt",
+        "results/QC/read_info/{sample}.txt.gz",
     script:
         "../scripts/calculate_read_info.py"

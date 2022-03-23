@@ -84,7 +84,7 @@ def process_reads(bamfile):
 
 def main():
     rinfo_summary = process_reads(bamfile)
-    rinfo_summary.to_csv(outfile, sep="\t", index=False)
+    rinfo_summary.to_csv(outfile, sep="\t", index=False, compression="gzip")
 
 if __name__ == "__main__":
     main()
