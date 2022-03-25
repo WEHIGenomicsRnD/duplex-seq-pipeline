@@ -84,6 +84,18 @@ def process_reads(bamfile):
 
 def main():
     rinfo_summary = process_reads(bamfile)
+
+    # restructure format to resemble the Sanger NanoSeq pipeline output
+    rinfo_summary = pd.merge(
+        rinfo_summary[rinfo_summary.strand == '+'],
+        rinfo_summary[rinfo_summary.strand == '-'],
+        how='outer',
+        on=['chrom', 'pos', 'mpos', 'umi']
+    ).drop_duplicates().fillna(0)
+
+    rinfo_summary = rinfo_summary[['chrom', 'pos', 'mpos', 'umi', '0_x', '0_y']]
+    rinfo_summary = rinfo_summary.rename(mapper={'0_x': 'x', '0_y': 'y'}, axis=1)
+
     rinfo_summary.to_csv(outfile, sep="\t", index=False, compression="gzip")
 
 if __name__ == "__main__":
