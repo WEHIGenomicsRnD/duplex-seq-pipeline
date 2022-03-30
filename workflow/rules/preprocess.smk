@@ -184,27 +184,3 @@ rule merge_bam_alignment:
                 CREATE_INDEX=true \
                 TMP_DIR={resources.tmpdir}
         """
-
-
-rule mark_duplicates:
-    input:
-        "results/mapped_bams/{sample}_mapped_merged.bam",
-    output:
-        bam="results/mapped_bams/{sample}_mapped_merged_markdup.bam",
-        metrics="results/QC/mark_duplicates/{sample}.txt",
-    log:
-        "logs/mark_duplicates_{sample}.log",
-    conda:
-        "../envs/picard.yaml"
-    threads: 1
-    resources:
-        mem_mb=32768,
-        runtime="0-12:0:0",
-    shell:
-        """
-        picard -Xmx{resources.mem_mb}m MarkDuplicates \
-            I={input} \
-            O={output.bam} \
-            M={output.metrics} \
-            TMP_DIR={resources.tmpdir}
-        """

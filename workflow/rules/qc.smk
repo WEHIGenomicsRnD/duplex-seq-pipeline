@@ -47,6 +47,31 @@ rule fastqScreen:
         """
 
 
+rule mark_duplicates:
+    input:
+        "results/mapped_bams/{sample}_mapped_merged.bam",
+    output:
+        bam="results/mapped_bams/{sample}_mapped_merged_markdup.bam",
+        metrics="results/QC/mark_duplicates/{sample}.txt",
+    log:
+        "logs/mark_duplicates_{sample}.log",
+    conda:
+        "../envs/picard.yaml"
+    threads: 1
+    resources:
+        mem_mb=32768,
+        runtime="0-12:0:0",
+    shell:
+        """
+        picard -Xmx{resources.mem_mb}m MarkDuplicates \
+            I={input} \
+            O={output.bam} \
+            M={output.metrics} \
+            BARCODE_TAG=RX \
+            TMP_DIR={resources.tmpdir}
+        """
+
+
 rule samtools_stats:
     input:
         "results/mapped_bams/{sample}_mapped_merged.bam",
@@ -105,6 +130,7 @@ rule multiQC:
         ),
         samtools=expand("results/QC/samtools/stats/{sample}.txt", sample=samples),
         markdups=expand("results/QC/mark_duplicates/{sample}.txt", sample=samples),
+        config_file=config["multiqc_config"],
     conda:
         "../envs/multiqc.yaml"
     envmodules:
@@ -118,7 +144,9 @@ rule multiQC:
         "results/QC/multiQC/multiqc_report.html",
     shell:
         """
-        multiqc results/QC/fastQC/ \
+        multiqc \
+            --config {input.config_file} \
+            results/QC/fastQC/ \
             results/QC/fastqScreen/ \
             results/QC/qualimap/ \
             results/QC/samtools/ \
@@ -183,6 +211,7 @@ rule multiQC_consensus:
         samtools=expand(
             "results/QC/consensus/samtools/stats/{sample}.txt", sample=samples
         ),
+        config_file=config["multiqc_config"],
     conda:
         "../envs/multiqc.yaml"
     envmodules:
@@ -197,6 +226,7 @@ rule multiQC_consensus:
     shell:
         """
         multiqc \
+            --config {input.config_file} \
             results/QC/consensus/qualimap/ \
             results/QC/consensus/samtools/ \
             -o results/QC/consensus/multiQC -f
