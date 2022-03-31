@@ -1,4 +1,4 @@
 extra_fn_clean_exts:
   - "_R1"
   - "_mapped_merged"
-  - "_consensus_mapped_merged_filtered"
+  - "_consensus"
