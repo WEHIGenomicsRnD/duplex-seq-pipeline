@@ -1,6 +1,9 @@
 # config file for Fastq Screen
 FastqScreen_config: config/fastq_screen.conf
 
+# config file for MultiQC
+multiqc_config: config/multiqc_config.yaml
+
 # reference genome fasta
 ref: 'ref/Ecoli_strain_BL21_genome.fasta' 
 
@@ -22,8 +25,8 @@ min_distance: 1
 # 3M2S146T = 3 UMI, 2 skipped, 146 read
 # bases (--read-structure argument used
 # by fgbio's ExtractUmisFromBam)
-#read_structure: '3M2S146T 3M2S146T'
-read_structure: '8M143T 8M143T'
+read_structure: '3M2S146T 3M2S146T'
+#read_structure: '8M143T 8M143T'
 
 # SAM tag(s) in which to store the molecular
 # indices (--molecular-index-tag argument used by
@@ -74,11 +77,15 @@ min_base_quality: 50
 # used in fgbio's FilterConsensusReads ( --max-no-call-fraction)
 max_no_call_fraction: 0.05
 
-# minimum VAF to call using VarScan
-min_vaf: 0.000001
+# minimum duplex coverage to call a variant
+min_coverage: 4
 
-# p-value minimum threshold for VarScan
-pvalue: 0.99
+# min supporting duplex reads to call a variant
+min_reads: 2
 
-# maximum read length (used for assembly for contamination step only)
-max_rd_len: 151
+# minimum duplex VAF to call a variant
+min_vaf: 0.01
+
+# whether to use a strand filter (ignore variants with >90% support on one strand)
+# must be set to 0 (off) or 1 (on)
+strand_filter: 1

@@ -25,7 +25,7 @@ rule clip_bam:
         """
 
 
-rule varscan:
+rule call_variants:
     input:
         bam="results/consensus/{sample}_consensus_mapped_merged_filtered_clipped.bam",
         ref=config["ref"],
@@ -43,15 +43,19 @@ rule varscan:
         mem_mb=32768,
         runtime="1-0:0:0",
     params:
+        min_coverage=config["min_coverage"],
+        min_reads=config["min_reads"],
         min_vaf=config["min_vaf"],
-        pvalue=config["pvalue"],
+        strand_filter=config["strand_filter"],
     shell:
         """
         samtools mpileup -f {input.ref} {input.bam} | \
             varscan mpileup2snp -Xmx{resources.mem_mb} \
-            --min-coverage 1 \
-            --min-reads2 1 \
+            --min-avg-qual 0 \
+            --min-coverage {params.min_coverage} \
+            --min-reads2 {params.min_reads} \
             --min-var-freq {params.min_vaf} \
-            --p-value {params.pvalue} \
+            --strand-filter {params.strand_filter} \
+            --p-value 1 \
             --output-vcf 1 > {output}
         """
