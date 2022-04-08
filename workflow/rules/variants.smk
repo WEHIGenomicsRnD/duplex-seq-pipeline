@@ -46,7 +46,6 @@ rule call_variants:
         min_coverage=config["min_coverage"],
         min_reads=config["min_reads"],
         min_vaf=config["min_vaf"],
-        strand_filter=config["strand_filter"],
     shell:
         """
         samtools mpileup -f {input.ref} {input.bam} | \
@@ -55,7 +54,7 @@ rule call_variants:
             --min-coverage {params.min_coverage} \
             --min-reads2 {params.min_reads} \
             --min-var-freq {params.min_vaf} \
-            --strand-filter {params.strand_filter} \
+            --strand-filter 0 \
             --p-value 1 \
             --output-vcf 1 > {output}
         """

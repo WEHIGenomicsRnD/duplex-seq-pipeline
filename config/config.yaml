@@ -85,7 +85,3 @@ min_reads: 2
 
 # minimum duplex VAF to call a variant
 min_vaf: 0.01
-
-# whether to use a strand filter (ignore variants with >90% support on one strand)
-# must be set to 0 (off) or 1 (on)
-strand_filter: 1
