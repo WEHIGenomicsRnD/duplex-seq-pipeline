@@ -44,7 +44,7 @@ rule call_variants:
         runtime="1-0:0:0",
     params:
         min_coverage=config["min_coverage"],
-        min_reads=config["min_reads"],
+        min_reads2=config["min_reads2"],
         min_vaf=config["min_vaf"],
     shell:
         """
@@ -52,7 +52,7 @@ rule call_variants:
             varscan mpileup2snp -Xmx{resources.mem_mb} \
             --min-avg-qual 0 \
             --min-coverage {params.min_coverage} \
-            --min-reads2 {params.min_reads} \
+            --min-reads2 {params.min_reads2} \
             --min-var-freq {params.min_vaf} \
             --strand-filter 0 \
             --p-value 1 \
