@@ -9,7 +9,7 @@ rule group_reads_by_umi:
         "../envs/fgbio.yaml"
     threads: 1
     resources:
-        mem_mb=32768,
+        mem_mb=65536,
         runtime="0-12:0:0",
     params:
         min_mapq=config["min_mapq"],

@@ -9,7 +9,6 @@ families where each family has reads > 1.
 import pysam
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import os
 import sys
 

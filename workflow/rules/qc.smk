@@ -43,6 +43,7 @@ rule fastqScreen:
         """
         fastq_screen --conf {input.config_file} \
             --outdir results/QC/fastqScreen \
+            --force \
             {input.r1} {input.r2}
         """
 
@@ -59,7 +60,7 @@ rule mark_duplicates:
         "../envs/picard.yaml"
     threads: 1
     resources:
-        mem_mb=32768,
+        mem_mb=65536,
         runtime="0-12:0:0",
     shell:
         """

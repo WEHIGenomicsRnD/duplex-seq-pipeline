@@ -168,7 +168,7 @@ rule merge_bam_alignment:
         "../envs/picard.yaml"
     threads: 1
     resources:
-        mem_mb=32768,
+        mem_mb=65536,
         runtime="0-12:0:0",
     shell:
         """
