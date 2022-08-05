@@ -2,19 +2,19 @@ rule fastQC:
     input:
         r1="fastq/{sample}_R1.fastq.gz",
         r2="fastq/{sample}_R2.fastq.gz",
+    output:
+        report1="results/QC/fastQC/{sample}_R1_fastqc.html",
+        report2="results/QC/fastQC/{sample}_R2_fastqc.html",
+    log:
+        "logs/fastQC_{sample}.log",
     conda:
         "../envs/fastqc.yaml"
     envmodules:
         "fastqc/0.11.8",
-    threads: 2
+    threads: cluster["fastqc"]["threads"]
     resources:
-        mem_mb=8192,
-        runtime="0-12:0:0",
-    log:
-        "logs/fastQC_{sample}.log",
-    output:
-        report1="results/QC/fastQC/{sample}_R1_fastqc.html",
-        report2="results/QC/fastQC/{sample}_R2_fastqc.html",
+        mem_mb=cluster["fastqc"]["mem_mb"],
+        runtime=cluster["fastqc"]["runtime"],
     shell:
         """
         fastqc -t {threads} {input.r1} {input.r2} -o results/QC/fastQC
@@ -26,19 +26,19 @@ rule fastqScreen:
         r1="fastq/{sample}_R1.fastq.gz",
         r2="fastq/{sample}_R2.fastq.gz",
         config_file=config["FastqScreen_config"],
+    output:
+        report3="results/QC/fastqScreen/{sample}_R1_screen.html",
+        report4="results/QC/fastqScreen/{sample}_R2_screen.html",
+    log:
+        "logs/fastqScreen_{sample}.log",
     conda:
         "../envs/fastqscreen.yaml"
     envmodules:
         "bowtie2/2.3.4.1",
-    threads: 8
+    threads: cluster["fastqscreen"]["threads"]
     resources:
-        mem_mb=8192,
-        runtime="1-0:0:0",
-    log:
-        "logs/fastqScreen_{sample}.log",
-    output:
-        report3="results/QC/fastqScreen/{sample}_R1_screen.html",
-        report4="results/QC/fastqScreen/{sample}_R2_screen.html",
+        mem_mb=cluster["fastqscreen"]["mem_mb"],
+        runtime=cluster["fastqscreen"]["runtime"],
     shell:
         """
         fastq_screen --conf {input.config_file} \
@@ -58,10 +58,12 @@ rule mark_duplicates:
         "logs/mark_duplicates_{sample}.log",
     conda:
         "../envs/picard.yaml"
-    threads: 1
+    threads: cluster["picard"]["threads"]
     resources:
-        mem_mb=65536,
-        runtime="0-12:0:0",
+        mem_mb=cluster["picard"]["mem_mb"],
+        runtime=cluster["picard"]["runtime"],
+    params:
+        max_records_in_ram=cluster["picard"]["max_records_in_ram"],
     shell:
         """
         picard -Xmx{resources.mem_mb}m MarkDuplicates \
@@ -69,7 +71,8 @@ rule mark_duplicates:
             O={output.bam} \
             M={output.metrics} \
             BARCODE_TAG=RX \
-            TMP_DIR={resources.tmpdir}
+            TMP_DIR={resources.tmpdir} \
+            MAX_RECORDS_IN_RAM={params.max_records_in_ram}
         """
 
 
@@ -85,10 +88,10 @@ rule samtools_stats:
         "samtools/1.19",
     conda:
         "../envs/bwa_samtools.yaml"
-    threads: 1
+    threads: cluster["samtools_stats"]["threads"]
     resources:
-        mem_mb=8192,
-        runtime="0-5:0:0",
+        mem_mb=cluster["samtools_stats"]["mem_mb"],
+        runtime=cluster["samtools_stats"]["runtime"],
     shell:
         """
         samtools stats {input} > {output.stats}
@@ -105,10 +108,10 @@ rule qualimap:
         "logs/qualimap_{sample}.log",
     conda:
         "../envs/qualimap.yaml"
-    threads: 8
+    threads: cluster["qualimap"]["threads"]
     resources:
-        mem_mb=8192,
-        runtime="0-6:0:0",
+        mem_mb=cluster["qualimap"]["mem_mb"],
+        runtime=cluster["qualimap"]["runtime"],
     shell:
         """
         qualimap bamqc \
@@ -132,17 +135,18 @@ rule multiQC:
         samtools=expand("results/QC/samtools/stats/{sample}.txt", sample=samples),
         markdups=expand("results/QC/mark_duplicates/{sample}.txt", sample=samples),
         config_file=config["multiqc_config"],
+    output:
+        "results/QC/multiQC/multiqc_report.html",
+    log:
+        "logs/multiQC.log",
     conda:
         "../envs/multiqc.yaml"
     envmodules:
         "MultiQC/1.10.1",
+    threads: cluster["multiqc"]["threads"]
     resources:
-        mem_mb=65536,
-        runtime="0-12:0:0",
-    log:
-        "logs/multiQC.log",
-    output:
-        "results/QC/multiQC/multiqc_report.html",
+        mem_mb=cluster["multiqc"]["mem_mb"],
+        runtime=cluster["multiqc"]["runtime"],
     shell:
         """
         multiqc \
@@ -168,10 +172,10 @@ rule samtools_stats_consensus:
         "samtools/1.19",
     conda:
         "../envs/bwa_samtools.yaml"
-    threads: 1
+    threads: cluster["samtools_stats"]["threads"]
     resources:
-        mem_mb=8192,
-        runtime="0-5:0:0",
+        mem_mb=cluster["samtools_stats"]["mem_mb"],
+        runtime=cluster["samtools_stats"]["runtime"],
     shell:
         """
         samtools stats {input} > {output.stats}
@@ -188,10 +192,10 @@ rule qualimap_consensus:
         "logs/qualimap_consensus_{sample}.log",
     conda:
         "../envs/qualimap.yaml"
-    threads: 8
+    threads: cluster["qualimap"]["threads"]
     resources:
-        mem_mb=8192,
-        runtime="0-6:0:0",
+        mem_mb=cluster["qualimap"]["mem_mb"],
+        runtime=cluster["qualimap"]["runtime"],
     shell:
         """
         qualimap bamqc \
@@ -213,17 +217,18 @@ rule multiQC_consensus:
             "results/QC/consensus/samtools/stats/{sample}.txt", sample=samples
         ),
         config_file=config["multiqc_config"],
+    output:
+        "results/QC/consensus/multiQC/multiqc_report.html",
+    log:
+        "logs/multiQC_consensus.log",
     conda:
         "../envs/multiqc.yaml"
     envmodules:
         "MultiQC/1.10.1",
+    threads: cluster["multiqc"]["threads"]
     resources:
-        mem_mb=65536,
-        runtime="0-12:0:0",
-    log:
-        "logs/multiQC_consensus.log",
-    output:
-        "results/QC/consensus/multiQC/multiqc_report.html",
+        mem_mb=cluster["multiqc"]["mem_mb"],
+        runtime=cluster["multiqc"]["runtime"],
     shell:
         """
         multiqc \
@@ -234,18 +239,43 @@ rule multiQC_consensus:
         """
 
 
-rule calculate_read_info:
+rule get_read_info:
     input:
-        "results/mapped_bams/{sample}_mapped_merged.bam",
+        bam="results/mapped_bams/{sample}_mapped_merged.bam",
+        script="workflow/scripts/get_read_info.py",
+    output:
+        "results/QC/read_info/{sample}_rinfo.txt",
+    log:
+        "logs/get_read_info_{sample}.log",
     conda:
         "../envs/get_read_info.yaml"
-    threads: 1
+    threads: cluster["getreadinfo"]["threads"]
     resources:
-        mem_mb=196608,
-        runtime="1-0:0:0",
-    log:
-        "logs/calculate_read_info_{sample}.log",
+        mem_mb=cluster["getreadinfo"]["mem_mb"],
+        runtime=cluster["getreadinfo"]["runtime"],
+    params:
+        buffer_size=cluster["getreadinfo"]["buffer_size"],
+    shell:
+        """
+        python {input.script} {input.bam} | \
+            sort -k 2,6 -k 1,1 -u --parallel={threads} -S {params.buffer_size} -T {resources.tmpdir} | \
+            cut -f 2-6 | \
+            uniq --count > {output}
+        """
+
+
+rule format_read_info:
+    input:
+        "results/QC/read_info/{sample}_rinfo.txt",
     output:
         "results/QC/read_info/{sample}.txt.gz",
+    log:
+        "logs/format_read_info_{sample}.log",
+    conda:
+        "../envs/get_read_info.yaml"
+    threads: cluster["formatreadinfo"]["threads"]
+    resources:
+        mem_mb=cluster["formatreadinfo"]["mem_mb"],
+        runtime=cluster["formatreadinfo"]["runtime"],
     script:
-        "../scripts/calculate_read_info.py"
+        "../scripts/format_read_info.py"

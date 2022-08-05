@@ -7,10 +7,10 @@ rule group_reads_by_umi:
         "logs/group_reads_by_umi_{sample}.log",
     conda:
         "../envs/fgbio.yaml"
-    threads: 1
+    threads: cluster["fgbio"]["threads"]
     resources:
-        mem_mb=65536,
-        runtime="0-12:0:0",
+        mem_mb=cluster["fgbio"]["mem_mb"],
+        runtime=cluster["fgbio"]["runtime"],
     params:
         min_mapq=config["min_mapq"],
     shell:
@@ -35,10 +35,10 @@ rule call_duplex_consensus:
         "logs/call_duplex_consensus_{sample}.log",
     conda:
         "../envs/fgbio.yaml"
-    threads: 1
+    threads: cluster["fgbio"]["threads"]
     resources:
-        mem_mb=65536,
-        runtime="0-12:0:0",
+        mem_mb=cluster["fgbio"]["mem_mb"],
+        runtime=cluster["fgbio"]["runtime"],
     params:
         error_rate_pre_umi=config["error_rate_pre_umi"],
         error_rate_post_umi=config["error_rate_post_umi"],
@@ -65,10 +65,10 @@ rule remap_sam_to_fastq:
         "logs/remap_sam_to_fastq_{sample}.log",
     conda:
         "../envs/picard.yaml"
-    threads: 1
+    threads: cluster["picard"]["threads"]
     resources:
-        mem_mb=32768,
-        runtime="0-12:0:0",
+        mem_mb=cluster["picard"]["mem_mb"],
+        runtime=cluster["picard"]["runtime"],
     shell:
         """
         picard -Xmx{resources.mem_mb}m SamToFastq \
@@ -91,10 +91,10 @@ rule remap_align:
         "../envs/bwa_samtools.yaml"
     envmodules:
         "bwa/0.7.17",
-    threads: 16
+    threads: cluster["bwa"]["threads"]
     resources:
-        mem_mb=36864,
-        runtime="0-12:0:0",
+        mem_mb=cluster["bwa"]["mem_mb"],
+        runtime=cluster["bwa"]["runtime"],
     shell:
         """
         bwa mem -p -t {threads} {input.ref} {input.fastq} | samtools view -bS - > {output}
@@ -112,10 +112,10 @@ rule remap_merge_bam_alignment:
         "logs/remap_merge_bam_alignment_{sample}.log",
     conda:
         "../envs/picard.yaml"
-    threads: 1
+    threads: cluster["picard"]["threads"]
     resources:
-        mem_mb=32768,
-        runtime="0-12:0:0",
+        mem_mb=cluster["picard"]["mem_mb"],
+        runtime=cluster["picard"]["runtime"],
     shell:
         """
         picard -Xmx{resources.mem_mb}m MergeBamAlignment \
@@ -142,10 +142,10 @@ rule filter_consensus_reads:
         "logs/filter_consensus_reads_{sample}.log",
     conda:
         "../envs/fgbio.yaml"
-    threads: 1
+    threads: cluster["fgbio"]["threads"]
     resources:
-        mem_mb=32768,
-        runtime="0-12:0:0",
+        mem_mb=cluster["fgbio"]["mem_mb"],
+        runtime=cluster["fgbio"]["runtime"],
     params:
         min_reads=config["min_reads"],
         max_read_error_rate=config["max_read_error_rate"],

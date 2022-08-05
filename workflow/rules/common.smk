@@ -1,6 +1,15 @@
 import os
+import yaml
 from glob import iglob
 
+# ------------- load cluster config ------------
+with open("config/cluster.yaml", "r") as stream:
+    try:
+        cluster = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc, file=sys.stderr)
+
+# ------------- set up samples ------------
 fqs = iglob("fastq/*_R1.fastq.gz")
 
 # extract basename of full file path

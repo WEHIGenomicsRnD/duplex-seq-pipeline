@@ -8,10 +8,10 @@ rule clip_bam:
         "logs/clip_bam_{sample}.log",
     conda:
         "../envs/fgbio.yaml"
-    threads: 1
+    threads: cluster["fgbio"]["threads"]
     resources:
-        mem_mb=32768,
-        runtime="0-12:0:0",
+        mem_mb=cluster["fgbio"]["mem_mb"],
+        runtime=cluster["fgbio"]["runtime"],
     shell:
         """
         fgbio -Xmx{resources.mem_mb}m \
@@ -38,10 +38,10 @@ rule call_variants:
         "varscan/2.3.9",
     conda:
         "../envs/varscan.yaml"
-    threads: 1
+    threads: cluster["varscan"]["threads"]
     resources:
-        mem_mb=32768,
-        runtime="1-0:0:0",
+        mem_mb=cluster["varscan"]["mem_mb"],
+        runtime=cluster["varscan"]["runtime"],
     params:
         min_coverage=config["min_coverage"],
         min_reads2=config["min_reads2"],

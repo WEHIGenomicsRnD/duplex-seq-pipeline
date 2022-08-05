@@ -7,10 +7,10 @@ rule create_dict:
         "logs/create_dict.log",
     conda:
         "../envs/picard.yaml"
-    threads: 1
+    threads: cluster["picard"]["threads"]
     resources:
-        mem_mb=32768,
-        runtime="1-0:0:0",
+        mem_mb=cluster["picard"]["mem_mb"],
+        runtime=cluster["picard"]["runtime"],
     shell:
         """
         picard -Xmx{resources.mem_mb}m CreateSequenceDictionary \
@@ -30,10 +30,10 @@ rule convert_to_unmapped_bam:
         "logs/convert_to_unmapped_bam_{sample}.log",
     conda:
         "../envs/picard.yaml"
-    threads: 1
+    threads: cluster["picard"]["threads"]
     resources:
-        mem_mb=32768,
-        runtime="1-0:0:0",
+        mem_mb=cluster["picard"]["mem_mb"],
+        runtime=cluster["picard"]["runtime"],
     shell:
         """
         picard -Xmx{resources.mem_mb}m FastqToSam \
@@ -57,10 +57,10 @@ rule extract_umis:
         "logs/extract_umis_{sample}.log",
     conda:
         "../envs/fgbio.yaml"
-    threads: 1
+    threads: cluster["fgbio"]["threads"]
     resources:
-        mem_mb=32768,
-        runtime="0-12:0:0",
+        mem_mb=cluster["fgbio"]["mem_mb"],
+        runtime=cluster["fgbio"]["runtime"],
     params:
         read_structure=config["read_structure"],
         molecular_index_tags=config["molecular_index_tags"],
@@ -90,10 +90,10 @@ if correct_umis:
             "logs/correct_umis_{sample}.log",
         conda:
             "../envs/fgbio.yaml"
-        threads: 1
+        threads: cluster["fgbio"]["threads"]
         resources:
-            mem_mb=32768,
-            runtime="0-12:0:0",
+            mem_mb=cluster["fgbio"]["mem_mb"],
+            runtime=cluster["fgbio"]["runtime"],
         params:
             max_mismatches=config["max_mismatches"],
             min_distance=config["min_distance"],
@@ -119,10 +119,10 @@ rule bam_to_fastq:
         "logs/sam_to_fastq_{sample}.log",
     conda:
         "../envs/picard.yaml"
-    threads: 1
+    threads: cluster["picard"]["threads"]
     resources:
-        mem_mb=32768,
-        runtime="0-12:0:0",
+        mem_mb=cluster["picard"]["mem_mb"],
+        runtime=cluster["picard"]["runtime"],
     shell:
         """
         picard -Xmx{resources.mem_mb}m SamToFastq \
@@ -145,10 +145,10 @@ rule align:
         "../envs/bwa_samtools.yaml"
     envmodules:
         "bwa/0.7.17",
-    threads: 16
+    threads: cluster["bwa"]["threads"]
     resources:
-        mem_mb=36864,
-        runtime="0-12:0:0",
+        mem_mb=cluster["bwa"]["mem_mb"],
+        runtime=cluster["bwa"]["runtime"],
     shell:
         """
         bwa mem -p -t {threads} {input.ref} {input.fastq} | samtools view -bS - > {output}
@@ -166,10 +166,10 @@ rule merge_bam_alignment:
         "logs/merge_bam_alignment_{sample}.log",
     conda:
         "../envs/picard.yaml"
-    threads: 1
+    threads: cluster["picard"]["threads"]
     resources:
-        mem_mb=65536,
-        runtime="0-12:0:0",
+        mem_mb=cluster["picard"]["mem_mb"],
+        runtime=cluster["picard"]["runtime"],
     shell:
         """
         picard -Xmx{resources.mem_mb}m MergeBamAlignment \
