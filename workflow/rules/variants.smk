@@ -49,7 +49,7 @@ rule call_variants:
     shell:
         """
         samtools mpileup -f {input.ref} {input.bam} | \
-            varscan mpileup2snp -Xmx{resources.mem_mb} \
+            varscan mpileup2snp -Xmx{resources.mem_mb}m \
             --min-avg-qual 0 \
             --min-coverage {params.min_coverage} \
             --min-reads2 {params.min_reads2} \
