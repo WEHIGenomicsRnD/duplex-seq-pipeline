@@ -64,9 +64,10 @@ rule mark_duplicates:
         runtime=cluster["picard"]["runtime"],
     params:
         max_records_in_ram=cluster["picard"]["max_records_in_ram"],
+        java_mem=cluster["picard"]["java_mem"],
     shell:
         """
-        picard -Xmx{resources.mem_mb}m MarkDuplicates \
+        picard -Xmx{params.java_mem}m MarkDuplicates \
             I={input} \
             O={output.bam} \
             M={output.metrics} \

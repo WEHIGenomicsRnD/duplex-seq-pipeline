@@ -35,15 +35,15 @@ samtools_stats:
 
 qualimap:
     threads: 8
-    mem_mb: 8192
-    runtime: '0-5:0:0'
+    mem_mb: 131072
+    runtime: '2-0:0:0'
 
 picard:
     threads: 1
-    mem_mb: 98304
-    java_mem: 90000
+    mem_mb: 131072
+    java_mem: 120000
     runtime: '1-0:0:0'
-    max_records_in_ram: 100000
+    max_records_in_ram: 50000
 
 getreadinfo:
     threads: 16
@@ -63,5 +63,5 @@ fgbio:
 
 varscan:
     threads: 1
-    mem_mb: 32768
+    mem_mb: 98304
     runtime: '1-0:0:0'

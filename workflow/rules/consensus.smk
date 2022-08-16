@@ -69,9 +69,11 @@ rule remap_sam_to_fastq:
     resources:
         mem_mb=cluster["picard"]["mem_mb"],
         runtime=cluster["picard"]["runtime"],
+    params:
+        java_mem=cluster["picard"]["java_mem"],
     shell:
         """
-        picard -Xmx{resources.mem_mb}m SamToFastq \
+        picard -Xmx{params.java_mem}m SamToFastq \
             I={input} \
             F={output} \
             INTERLEAVE=true \
@@ -116,9 +118,11 @@ rule remap_merge_bam_alignment:
     resources:
         mem_mb=cluster["picard"]["mem_mb"],
         runtime=cluster["picard"]["runtime"],
+    params:
+        java_mem=cluster["picard"]["java_mem"],
     shell:
         """
-        picard -Xmx{resources.mem_mb}m MergeBamAlignment \
+        picard -Xmx{params.java_mem}m MergeBamAlignment \
                 UNMAPPED={input.unmapped} \
                 ALIGNED={input.mapped} \
                 O={output} \
