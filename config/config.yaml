@@ -77,6 +77,10 @@ min_base_quality: 50
 # used in fgbio's FilterConsensusReads ( --max-no-call-fraction)
 max_no_call_fraction: 0.05
 
+# variant caller
+# options are nvc (naive variant caller) or varscan
+variant_caller: 'nvc'
+
 # minimum duplex coverage to call a variant
 min_coverage: 4
 
@@ -85,3 +89,6 @@ min_reads2: 2
 
 # minimum duplex VAF to call a variant
 min_vaf: 0.01
+
+# ploidy (only used if using nvc for variant calling)
+ploidy: 1

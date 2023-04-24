@@ -22,6 +22,7 @@ for f in base:
 
 correct_umis = config["umis"] != ""
 umi_postfix = "uncorrected_" if correct_umis else ""
+variant_caller = config["variant_caller"]
 
 
 def get_create_dict_output():
