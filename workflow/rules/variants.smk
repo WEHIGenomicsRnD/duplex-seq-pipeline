@@ -95,3 +95,20 @@ elif variant_caller == "nvc":
                 --min_mapping_quality={params.min_mapq} \
                 --min_base_quality=0
             """
+
+
+    rule filter_vcf:
+       input:
+           "results/variants/{sample}.vcf",
+       output:
+           "results/variants/{sample}_filtered.vcf"",
+       log:
+           "logs/filter_vcf_{sample}.log",
+       conda:
+           "../envs/get_read_info.yaml"
+       threads: 1
+       resources:
+           mem_mb=cluster["varscan"]["mem_mb"],
+           runtime=cluster["varscan"]["runtime"],
+       script:
+           "workflow/scripts/filter_vcf.py"

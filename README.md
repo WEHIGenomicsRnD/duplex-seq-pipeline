@@ -8,7 +8,7 @@ identifiers](https://plone.bcgsc.ca/services/solseq/duplex-umi-documents/idt_ana
 The only prerequisite is [snakemake](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html). To install snakemake, you will need to install a Conda-based Python3 distribution. For this, [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) is recommended. Once mamba is installed, snakemake can be installed like so:
 
 ```
-mamba create -c conda-forge -c bioconda -n snakemake snakemake
+mamba create -c conda-forge -c bioconda -n snakemake snakemake=7.0.0-0
 ```
 
 Now activate the snakemake environment (you'll have to do this every time you want to run the pipeline):
