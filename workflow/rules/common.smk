@@ -32,7 +32,7 @@ def get_create_dict_output():
 
 
 def get_varcall_output():
-    output = expand("results/variants/{sample}.vcf", sample=samples)
+    output = expand("results/variants/{sample}_filtered.vcf", sample=samples)
     return output
 
 

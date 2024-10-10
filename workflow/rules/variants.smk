@@ -101,7 +101,7 @@ elif variant_caller == "nvc":
        input:
            "results/variants/{sample}.vcf",
        output:
-           "results/variants/{sample}_filtered.vcf"",
+           "results/variants/{sample}_filtered.vcf",
        log:
            "logs/filter_vcf_{sample}.log",
        conda:
@@ -111,4 +111,4 @@ elif variant_caller == "nvc":
            mem_mb=cluster["varscan"]["mem_mb"],
            runtime=cluster["varscan"]["runtime"],
        script:
-           "workflow/scripts/filter_vcf.py"
+           "../scripts/filter_vcf.py"
