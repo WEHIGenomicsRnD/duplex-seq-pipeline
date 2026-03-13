@@ -29,5 +29,6 @@ rule all:
         get_create_dict_output(),
         get_varcall_output(),
         get_calc_rinfo_output(),
+        get_duplex_metrics_output(),
         "results/QC/multiQC/multiqc_report.html",
         "results/QC/consensus/multiQC/multiqc_report.html",

@@ -39,3 +39,8 @@ def get_varcall_output():
 def get_calc_rinfo_output():
     output = expand("results/QC/read_info/{sample}.txt.gz", sample=samples)
     return output
+
+
+def get_duplex_metrics_output():
+    output = expand("results/QC/duplex_metrics/{sample}_metrics.csv", sample=samples)
+    return output

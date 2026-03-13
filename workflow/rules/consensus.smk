@@ -10,7 +10,7 @@ rule group_reads_by_umi:
     threads: cluster["fgbio"]["threads"]
     resources:
         mem_mb=cluster["fgbio"]["mem_mb"],
-        runtime=cluster["fgbio"]["runtime"],
+        walltime=cluster["fgbio"]["walltime"],
     params:
         min_mapq=config["min_mapq"],
     shell:
@@ -38,7 +38,7 @@ rule call_duplex_consensus:
     threads: cluster["fgbio"]["threads"]
     resources:
         mem_mb=cluster["fgbio"]["mem_mb"],
-        runtime=cluster["fgbio"]["runtime"],
+        walltime=cluster["fgbio"]["walltime"],
     params:
         error_rate_pre_umi=config["error_rate_pre_umi"],
         error_rate_post_umi=config["error_rate_post_umi"],
@@ -68,7 +68,7 @@ rule remap_sam_to_fastq:
     threads: cluster["picard"]["threads"]
     resources:
         mem_mb=cluster["picard"]["mem_mb"],
-        runtime=cluster["picard"]["runtime"],
+        walltime=cluster["picard"]["walltime"],
     params:
         java_mem=cluster["picard"]["java_mem"],
     shell:
@@ -96,7 +96,7 @@ rule remap_align:
     threads: cluster["bwa"]["threads"]
     resources:
         mem_mb=cluster["bwa"]["mem_mb"],
-        runtime=cluster["bwa"]["runtime"],
+        walltime=cluster["bwa"]["walltime"],
     shell:
         """
         bwa mem -p -t {threads} {input.ref} {input.fastq} | samtools view -bS - > {output}
@@ -117,7 +117,7 @@ rule remap_merge_bam_alignment:
     threads: cluster["picard"]["threads"]
     resources:
         mem_mb=cluster["picard"]["mem_mb"],
-        runtime=cluster["picard"]["runtime"],
+        walltime=cluster["picard"]["walltime"],
     params:
         java_mem=cluster["picard"]["java_mem"],
     shell:
@@ -149,7 +149,7 @@ rule filter_consensus_reads:
     threads: cluster["fgbio"]["threads"]
     resources:
         mem_mb=cluster["fgbio"]["mem_mb"],
-        runtime=cluster["fgbio"]["runtime"],
+        walltime=cluster["fgbio"]["walltime"],
     params:
         min_reads=config["min_reads"],
         max_read_error_rate=config["max_read_error_rate"],

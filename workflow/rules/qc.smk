@@ -14,7 +14,7 @@ rule fastQC:
     threads: cluster["fastqc"]["threads"]
     resources:
         mem_mb=cluster["fastqc"]["mem_mb"],
-        runtime=cluster["fastqc"]["runtime"],
+        walltime=cluster["fastqc"]["walltime"],
     shell:
         """
         fastqc -t {threads} {input.r1} {input.r2} -o results/QC/fastQC
@@ -38,7 +38,7 @@ rule fastqScreen:
     threads: cluster["fastqscreen"]["threads"]
     resources:
         mem_mb=cluster["fastqscreen"]["mem_mb"],
-        runtime=cluster["fastqscreen"]["runtime"],
+        walltime=cluster["fastqscreen"]["walltime"],
     shell:
         """
         fastq_screen --conf {input.config_file} \
@@ -61,7 +61,7 @@ rule mark_duplicates:
     threads: cluster["picard"]["threads"]
     resources:
         mem_mb=cluster["picard"]["mem_mb"],
-        runtime=cluster["picard"]["runtime"],
+        walltime=cluster["picard"]["walltime"],
     params:
         max_records_in_ram=cluster["picard"]["max_records_in_ram"],
         java_mem=cluster["picard"]["java_mem"],
@@ -92,7 +92,7 @@ rule samtools_stats:
     threads: cluster["samtools_stats"]["threads"]
     resources:
         mem_mb=cluster["samtools_stats"]["mem_mb"],
-        runtime=cluster["samtools_stats"]["runtime"],
+        walltime=cluster["samtools_stats"]["walltime"],
     shell:
         """
         samtools stats {input} > {output.stats}
@@ -112,7 +112,7 @@ rule qualimap:
     threads: cluster["qualimap"]["threads"]
     resources:
         mem_mb=cluster["qualimap"]["mem_mb"],
-        runtime=cluster["qualimap"]["runtime"],
+        walltime=cluster["qualimap"]["walltime"],
     shell:
         """
         qualimap bamqc \
@@ -147,7 +147,7 @@ rule multiQC:
     threads: cluster["multiqc"]["threads"]
     resources:
         mem_mb=cluster["multiqc"]["mem_mb"],
-        runtime=cluster["multiqc"]["runtime"],
+        walltime=cluster["multiqc"]["walltime"],
     shell:
         """
         multiqc \
@@ -176,7 +176,7 @@ rule samtools_stats_consensus:
     threads: cluster["samtools_stats"]["threads"]
     resources:
         mem_mb=cluster["samtools_stats"]["mem_mb"],
-        runtime=cluster["samtools_stats"]["runtime"],
+        walltime=cluster["samtools_stats"]["walltime"],
     shell:
         """
         samtools stats {input} > {output.stats}
@@ -196,7 +196,7 @@ rule qualimap_consensus:
     threads: cluster["qualimap"]["threads"]
     resources:
         mem_mb=cluster["qualimap"]["mem_mb"],
-        runtime=cluster["qualimap"]["runtime"],
+        walltime=cluster["qualimap"]["walltime"],
     shell:
         """
         qualimap bamqc \
@@ -229,7 +229,7 @@ rule multiQC_consensus:
     threads: cluster["multiqc"]["threads"]
     resources:
         mem_mb=cluster["multiqc"]["mem_mb"],
-        runtime=cluster["multiqc"]["runtime"],
+        walltime=cluster["multiqc"]["walltime"],
     shell:
         """
         multiqc \
@@ -253,7 +253,7 @@ rule get_read_info:
     threads: cluster["getreadinfo"]["threads"]
     resources:
         mem_mb=cluster["getreadinfo"]["mem_mb"],
-        runtime=cluster["getreadinfo"]["runtime"],
+        walltime=cluster["getreadinfo"]["walltime"],
     params:
         buffer_size=cluster["getreadinfo"]["buffer_size"],
     shell:
@@ -277,6 +277,43 @@ rule format_read_info:
     threads: cluster["formatreadinfo"]["threads"]
     resources:
         mem_mb=cluster["formatreadinfo"]["mem_mb"],
-        runtime=cluster["formatreadinfo"]["runtime"],
+        walltime=cluster["formatreadinfo"]["walltime"],
     script:
         "../scripts/format_read_info.py"
+
+
+rule calc_duplex_metrics:
+    input:
+        rinfo="results/QC/read_info/{sample}.txt.gz",
+        ref=config["ref"],
+    output:
+        "results/QC/duplex_metrics/{sample}_metrics.csv",
+    log:
+        "logs/calc_duplex_metrics_{sample}.log",
+    conda:
+        "../envs/calc_duplex_metrics.yaml"
+    threads: cluster["calcduplexmetrics"]["threads"]
+    resources:
+        mem_mb=cluster["calcduplexmetrics"]["mem_mb"],
+        walltime=cluster["calcduplexmetrics"]["walltime"],
+    params:
+        metrics=config.get("duplex_metrics", "all"),
+    shell:
+        """
+        if ! Rscript --vanilla -e "library(CalcDuplexMetrics)" 2>/dev/null; then
+            Rscript --vanilla \
+                -e "devtools::install_github('WEHIGenomicsRnD/calculate-duplex-metrics')" \
+                >> {log} 2>&1
+            SCRIPT_PATH=$(Rscript --vanilla \
+                -e "cat(system.file('exec', 'calc-duplex-metrics', package='CalcDuplexMetrics'))" \
+                2>/dev/null)
+            ln -sf "$SCRIPT_PATH" "$CONDA_PREFIX/bin/calc-duplex-metrics"
+        fi
+
+        calc-duplex-metrics \
+            --input {input.rinfo} \
+            --output {output} \
+            --ref_fasta {input.ref} \
+            --metrics {params.metrics} \
+            >> {log} 2>&1
+        """

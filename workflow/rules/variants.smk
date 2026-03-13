@@ -11,7 +11,7 @@ rule clip_bam:
     threads: cluster["fgbio"]["threads"]
     resources:
         mem_mb=cluster["fgbio"]["mem_mb"],
-        runtime=cluster["fgbio"]["runtime"],
+        walltime=cluster["fgbio"]["walltime"],
     shell:
         """
         fgbio -Xmx{resources.mem_mb}m \
@@ -43,7 +43,7 @@ if variant_caller == "varscan":
         threads: cluster["varscan"]["threads"]
         resources:
             mem_mb=cluster["varscan"]["mem_mb"],
-            runtime=cluster["varscan"]["runtime"],
+            walltime=cluster["varscan"]["walltime"],
         params:
             min_coverage=config["min_coverage"],
             min_reads2=config["min_reads2"],
@@ -77,7 +77,7 @@ elif variant_caller == "nvc":
         threads: 1
         resources:
             mem_mb=cluster["varscan"]["mem_mb"],
-            runtime=cluster["varscan"]["runtime"],
+            walltime=cluster["varscan"]["walltime"],
         params:
             ploidy=config["ploidy"],
             min_reads2=config["min_reads2"],
@@ -109,6 +109,6 @@ elif variant_caller == "nvc":
        threads: 1
        resources:
            mem_mb=cluster["varscan"]["mem_mb"],
-           runtime=cluster["varscan"]["runtime"],
+           walltime=cluster["varscan"]["walltime"],
        script:
            "../scripts/filter_vcf.py"
