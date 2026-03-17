@@ -68,5 +68,5 @@ varscan:
 
 calcduplexmetrics:
     threads: 1
-    mem_mb: 32768
+    mem_mb: 16384
     walltime: '0-4:0:0'

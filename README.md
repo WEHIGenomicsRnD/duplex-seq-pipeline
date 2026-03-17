@@ -54,6 +54,7 @@ Edit `config/config.yaml` before running. The key settings are:
 | `variant_caller` | Variant caller to use: `nvc` (naive variant caller) or `varscan`. |
 | `min_reads` | Minimum reads supporting a consensus base (fgbio `FilterConsensusReads --min-reads`). |
 | `FastqScreen_config` | Path to the FastQ Screen config file. |
+| `cluster_config` | Path to the SLURM cluster config YAML (per-rule resource settings). Default: `config/cluster.yaml`. Use `config/cluster_bigmem.yaml` for high-memory nodes. |
 
 All other parameters are documented inline in `config/config.yaml`.
 

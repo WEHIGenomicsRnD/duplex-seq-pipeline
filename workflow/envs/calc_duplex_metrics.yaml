@@ -9,6 +9,7 @@ dependencies:
   - r-data.table
   - r-magrittr
   - r-seqinr
+  - r-r.utils
   - bioconductor-genomeinfodb
   - bioconductor-rsamtools
   - bioconductor-biostrings

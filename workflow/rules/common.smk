@@ -3,7 +3,8 @@ import yaml
 from glob import iglob
 
 # ------------- load cluster config ------------
-with open("config/cluster.yaml", "r") as stream:
+cluster_config_path = config.get("cluster_config", "config/cluster.yaml")
+with open(cluster_config_path, "r") as stream:
     try:
         cluster = yaml.safe_load(stream)
     except yaml.YAMLError as exc:

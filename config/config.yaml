@@ -1,3 +1,6 @@
+# cluster config file for SLURM resource settings per rule
+cluster_config: config/cluster.yaml
+
 # config file for Fastq Screen
 FastqScreen_config: config/fastq_screen.conf
 
