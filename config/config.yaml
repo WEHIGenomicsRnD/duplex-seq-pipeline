@@ -1,3 +1,6 @@
+# cluster config file for SLURM resource settings per rule
+cluster_config: config/cluster.yaml
+
 # config file for Fastq Screen
 FastqScreen_config: config/fastq_screen.conf
 
@@ -6,6 +9,13 @@ multiqc_config: config/multiqc_config.yaml
 
 # reference genome fasta
 ref: 'ref/Ecoli_strain_BL21_genome.fasta' 
+
+# metrics to calculate with calc-duplex-metrics
+# comma-separated list of individual metrics and/or groups
+# individual: frac_singletons, efficiency, drop_out_rate
+# groups: gc, family
+# (default: all)
+duplex_metrics: 'all'
 
 # file of UMI sequences, one per line
 # set to empty string if UMIs are unknown

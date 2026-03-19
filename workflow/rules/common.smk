@@ -3,7 +3,8 @@ import yaml
 from glob import iglob
 
 # ------------- load cluster config ------------
-with open("config/cluster.yaml", "r") as stream:
+cluster_config_path = config.get("cluster_config", "config/cluster.yaml")
+with open(cluster_config_path, "r") as stream:
     try:
         cluster = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
@@ -38,4 +39,9 @@ def get_varcall_output():
 
 def get_calc_rinfo_output():
     output = expand("results/QC/read_info/{sample}.txt.gz", sample=samples)
+    return output
+
+
+def get_duplex_metrics_output():
+    output = expand("results/QC/duplex_metrics/{sample}_metrics.csv", sample=samples)
     return output

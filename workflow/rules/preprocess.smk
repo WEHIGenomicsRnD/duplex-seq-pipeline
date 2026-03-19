@@ -10,7 +10,7 @@ rule create_dict:
     threads: cluster["picard"]["threads"]
     resources:
         mem_mb=cluster["picard"]["mem_mb"],
-        runtime=cluster["picard"]["runtime"],
+        walltime=cluster["picard"]["walltime"],
     shell:
         """
         picard -Xmx{resources.mem_mb}m CreateSequenceDictionary \
@@ -33,7 +33,7 @@ rule convert_to_unmapped_bam:
     threads: cluster["picard"]["threads"]
     resources:
         mem_mb=cluster["picard"]["mem_mb"],
-        runtime=cluster["picard"]["runtime"],
+        walltime=cluster["picard"]["walltime"],
     params:
         java_mem=cluster["picard"]["java_mem"],
     shell:
@@ -62,7 +62,7 @@ rule extract_umis:
     threads: cluster["fgbio"]["threads"]
     resources:
         mem_mb=cluster["fgbio"]["mem_mb"],
-        runtime=cluster["fgbio"]["runtime"],
+        walltime=cluster["fgbio"]["walltime"],
     params:
         read_structure=config["read_structure"],
         molecular_index_tags=config["molecular_index_tags"],
@@ -95,7 +95,7 @@ if correct_umis:
         threads: cluster["fgbio"]["threads"]
         resources:
             mem_mb=cluster["fgbio"]["mem_mb"],
-            runtime=cluster["fgbio"]["runtime"],
+            walltime=cluster["fgbio"]["walltime"],
         params:
             max_mismatches=config["max_mismatches"],
             min_distance=config["min_distance"],
@@ -124,7 +124,7 @@ rule bam_to_fastq:
     threads: cluster["picard"]["threads"]
     resources:
         mem_mb=cluster["picard"]["mem_mb"],
-        runtime=cluster["picard"]["runtime"],
+        walltime=cluster["picard"]["walltime"],
     params:
         java_mem=cluster["picard"]["java_mem"],
     shell:
@@ -152,7 +152,7 @@ rule align:
     threads: cluster["bwa"]["threads"]
     resources:
         mem_mb=cluster["bwa"]["mem_mb"],
-        runtime=cluster["bwa"]["runtime"],
+        walltime=cluster["bwa"]["walltime"],
     shell:
         """
         bwa mem -p -t {threads} {input.ref} {input.fastq} | samtools view -bS - > {output}
@@ -173,7 +173,7 @@ rule merge_bam_alignment:
     threads: cluster["picard"]["threads"]
     resources:
         mem_mb=cluster["picard"]["mem_mb"],
-        runtime=cluster["picard"]["runtime"],
+        walltime=cluster["picard"]["walltime"],
     params:
         java_mem=cluster["picard"]["java_mem"],
     shell:
