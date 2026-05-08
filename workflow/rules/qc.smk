@@ -142,8 +142,6 @@ rule multiQC:
         "logs/multiQC.log",
     conda:
         "../envs/multiqc.yaml"
-    envmodules:
-        "MultiQC/1.10.1",
     threads: cluster["multiqc"]["threads"]
     resources:
         mem_mb=cluster["multiqc"]["mem_mb"],
@@ -217,6 +215,9 @@ rule multiQC_consensus:
         samtools=expand(
             "results/QC/consensus/samtools/stats/{sample}.txt", sample=samples
         ),
+        duplex_metrics=expand(
+            "results/QC/duplex_metrics/{sample}_metrics.csv", sample=samples
+        ),
         config_file=config["multiqc_config"],
     output:
         "results/QC/consensus/multiQC/multiqc_report.html",
@@ -224,8 +225,6 @@ rule multiQC_consensus:
         "logs/multiQC_consensus.log",
     conda:
         "../envs/multiqc.yaml"
-    envmodules:
-        "MultiQC/1.10.1",
     threads: cluster["multiqc"]["threads"]
     resources:
         mem_mb=cluster["multiqc"]["mem_mb"],
@@ -236,6 +235,7 @@ rule multiQC_consensus:
             --config {input.config_file} \
             results/QC/consensus/qualimap/ \
             results/QC/consensus/samtools/ \
+            results/QC/duplex_metrics/ \
             -o results/QC/consensus/multiQC -f
         """
 
