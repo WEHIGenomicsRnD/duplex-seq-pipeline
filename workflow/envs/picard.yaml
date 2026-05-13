@@ -3,3 +3,4 @@ channels:
   - bioconda
 dependencies:
   - picard =2.27.4
+  - openjdk =11
