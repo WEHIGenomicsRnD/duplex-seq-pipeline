@@ -97,7 +97,7 @@ All results are written under `results/`. The most relevant outputs are:
 | Path | Description |
 |------|-------------|
 | `results/QC/multiQC/multiqc_report.html` | MultiQC report for pre-consensus reads, including FastQC and FastQ Screen metrics. |
-| `results/QC/consensus/multiQC/multiqc_report.html` | MultiQC report for post-consensus reads. |
+| `results/QC/consensus/multiQC/multiqc_report.html` | MultiQC report for post-consensus reads, including duplex-specific metrics from `results/QC/duplex_metrics/` via the [`duplex-multiqc`](https://github.com/WEHIGenomicsRnD/duplex-multiqc) plugin. |
 | `results/QC/duplex_metrics/{sample}_metrics.csv` | Duplex metrics (efficiency, family statistics, GC bias, etc.) computed by [calc-duplex-metrics](https://github.com/WEHIGenomicsRnD/calculate-duplex-metrics). |
 | `results/consensus/{sample}_consensus_mapped_merged_filtered.bam` | Final duplex consensus read alignments (mapped, merged, and filtered). |
 | `results/variants/{sample}_filtered.vcf` | Filtered variant calls. |

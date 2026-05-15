@@ -3,3 +3,6 @@ channels:
   - bioconda
 dependencies:
   - multiqc =1.14
+  - pip
+  - pip:
+      - git+https://github.com/WEHIGenomicsRnD/duplex-multiqc.git@9d0f2bafe3aefdb5bd6d8b4d3610f86cbfe77321

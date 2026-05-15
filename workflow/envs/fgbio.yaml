@@ -3,3 +3,4 @@ channels:
   - bioconda
 dependencies:
   - fgbio =1.4.0
+  - openjdk =8
