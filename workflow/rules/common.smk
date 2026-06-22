@@ -45,3 +45,20 @@ def get_calc_rinfo_output():
 def get_duplex_metrics_output():
     output = expand("results/QC/duplex_metrics/{sample}_metrics.csv", sample=samples)
     return output
+
+
+def get_qualimap_output():
+    if config.get("run_qualimap", False):
+        return expand(
+            "results/QC/qualimap/{sample}/qualimapReport.html", sample=samples
+        )
+    return []
+
+
+def get_qualimap_consensus_output():
+    if config.get("run_qualimap", False):
+        return expand(
+            "results/QC/consensus/qualimap/{sample}/qualimapReport.html",
+            sample=samples,
+        )
+    return []

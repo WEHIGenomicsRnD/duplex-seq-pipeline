@@ -130,9 +130,7 @@ rule multiQC:
         fastqscreen=expand(
             "results/QC/fastqScreen/{sample}_R1_screen.html", sample=samples
         ),
-        qualimap=expand(
-            "results/QC/qualimap/{sample}/qualimapReport.html", sample=samples
-        ),
+        qualimap=get_qualimap_output(),
         samtools=expand("results/QC/samtools/stats/{sample}.txt", sample=samples),
         markdups=expand("results/QC/mark_duplicates/{sample}.txt", sample=samples),
         config_file=config["multiqc_config"],
@@ -146,13 +144,15 @@ rule multiQC:
     resources:
         mem_mb=cluster["multiqc"]["mem_mb"],
         walltime=cluster["multiqc"]["walltime"],
+    params:
+        qualimap_dir="results/QC/qualimap/" if config.get("run_qualimap", False) else "",
     shell:
         """
         multiqc \
             --config {input.config_file} \
             results/QC/fastQC/ \
             results/QC/fastqScreen/ \
-            results/QC/qualimap/ \
+            {params.qualimap_dir} \
             results/QC/samtools/ \
             results/QC/mark_duplicates \
             -o results/QC/multiQC -f
@@ -208,10 +208,7 @@ rule qualimap_consensus:
 
 rule multiQC_consensus:
     input:
-        qualimap=expand(
-            "results/QC/consensus/qualimap/{sample}/qualimapReport.html",
-            sample=samples,
-        ),
+        qualimap=get_qualimap_consensus_output(),
         samtools=expand(
             "results/QC/consensus/samtools/stats/{sample}.txt", sample=samples
         ),
@@ -229,11 +226,13 @@ rule multiQC_consensus:
     resources:
         mem_mb=cluster["multiqc"]["mem_mb"],
         walltime=cluster["multiqc"]["walltime"],
+    params:
+        qualimap_dir="results/QC/consensus/qualimap/" if config.get("run_qualimap", False) else "",
     shell:
         """
         multiqc \
             --config {input.config_file} \
-            results/QC/consensus/qualimap/ \
+            {params.qualimap_dir} \
             results/QC/consensus/samtools/ \
             results/QC/duplex_metrics/ \
             -o results/QC/consensus/multiQC -f

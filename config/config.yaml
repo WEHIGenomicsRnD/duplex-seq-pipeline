@@ -7,6 +7,10 @@ FastqScreen_config: config/fastq_screen.conf
 # config file for MultiQC
 multiqc_config: config/multiqc_config.yaml
 
+# run qualimap BAM QC on mapped and consensus BAMs
+# qualimap is resource-intensive; set to true to enable
+run_qualimap: false
+
 # reference genome fasta
 ref: 'ref/Ecoli_strain_BL21_genome.fasta' 
 
