@@ -258,8 +258,8 @@ rule get_read_info:
     shell:
         """
         python {input.script} {input.bam} | \
-            sort -k 2,6 -k 1,1 -u --parallel={threads} -S {params.buffer_size} -T {resources.tmpdir} | \
-            cut -f 2-6 | \
+            sort -k 2,7 -k 1,1 -u --parallel={threads} -S {params.buffer_size} -T {resources.tmpdir} | \
+            cut -f 2-7 | \
             uniq --count > {output}
         """
 
