@@ -242,9 +242,10 @@ rule multiQC_consensus:
 rule get_read_info:
     input:
         bam="results/mapped_bams/{sample}_mapped_merged.bam",
-        script="workflow/scripts/get_read_info.py",
+        get_rinfo_script="workflow/scripts/get_read_info.py",
+        format_rinfo_script="workflow/scripts/format_read_info.py",
     output:
-        "results/QC/read_info/{sample}_rinfo.txt",
+        "results/QC/read_info/{sample}.txt.gz",
     log:
         "logs/get_read_info_{sample}.log",
     conda:
@@ -257,28 +258,19 @@ rule get_read_info:
         buffer_size=cluster["getreadinfo"]["buffer_size"],
     shell:
         """
-        python {input.script} {input.bam} | \
+        tmpfile=$(mktemp --tmpdir {wildcards.sample}_rinfo_tmp.XXXXXX.txt)
+        python {input.get_rinfo_script} {input.bam} | \
             sort -k 2,7 -k 1,1 -u --parallel={threads} -S {params.buffer_size} -T {resources.tmpdir} | \
             cut -f 2-7 | \
-            uniq --count > {output}
+            uniq --count > $tmpfile
+        if [ -s $tmpfile ]; then
+            python {input.format_rinfo_script} $tmpfile {output}
+            rm $tmpfile
+        else
+            echo "No reads found for sample {wildcards.sample}"
+            exit 1;
+        fi
         """
-
-
-rule format_read_info:
-    input:
-        "results/QC/read_info/{sample}_rinfo.txt",
-    output:
-        "results/QC/read_info/{sample}.txt.gz",
-    log:
-        "logs/format_read_info_{sample}.log",
-    conda:
-        "../envs/get_read_info.yaml"
-    threads: cluster["formatreadinfo"]["threads"]
-    resources:
-        mem_mb=cluster["formatreadinfo"]["mem_mb"],
-        walltime=cluster["formatreadinfo"]["walltime"],
-    script:
-        "../scripts/format_read_info.py"
 
 
 rule calc_duplex_metrics:
