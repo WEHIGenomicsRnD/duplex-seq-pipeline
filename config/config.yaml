@@ -21,6 +21,10 @@ ref: 'ref/Ecoli_strain_BL21_genome.fasta'
 # (default: all)
 duplex_metrics: 'all'
 
+# BED file of target regions for calculating on_target rate in capture experiments
+# leave empty to skip passing --target_bed to calc-duplex-metrics
+target_bed: ''
+
 # file of UMI sequences, one per line
 # set to empty string if UMIs are unknown
 # used to correct UMI sequences

@@ -289,6 +289,9 @@ rule calc_duplex_metrics:
         walltime=cluster["calcduplexmetrics"]["walltime"],
     params:
         metrics=config.get("duplex_metrics", "all"),
+        target_bed_arg=(
+            f"--target_bed {config['target_bed']}" if config.get("target_bed", "") else ""
+        ),
     shell:
         """
         if ! Rscript --vanilla -e "library(CalcDuplexMetrics)" 2>/dev/null; then
@@ -306,5 +309,6 @@ rule calc_duplex_metrics:
             --output {output} \
             --ref_fasta {input.ref} \
             --metrics {params.metrics} \
+            {params.target_bed_arg} \
             >> {log} 2>&1
         """

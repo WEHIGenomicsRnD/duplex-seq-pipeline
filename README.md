@@ -66,6 +66,7 @@ Edit `config/config.yaml` before running. The key settings are:
 | `min_reads`      | Minimum reads supporting a consensus base (fgbio `FilterConsensusReads --min-reads`).          |
 | `FastqScreen_config` | Path to the FastQ Screen config file.                                                      |
 | `cluster_config` | Path to the SLURM cluster config YAML (per-rule resource settings). Default: `config/cluster.yaml`. Use `config/cluster_bigmem.yaml` for high-memory nodes. |
+| `target_bed`     | For experiments with capture regions, you can provide a path in bed format to calculate the on-target rate for raw and duplex reads. |
 
 All other parameters are documented inline in `config/config.yaml`.
 
