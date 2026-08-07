@@ -38,8 +38,9 @@ def get_varcall_output():
 
 
 def get_calc_rinfo_output():
-    output = expand("results/QC/read_info/{sample}.txt.gz", sample=samples)
-    return output
+    if config.get("output_read_info", False):
+        return expand("results/QC/read_info/{sample}.txt.gz", sample=samples)
+    return []
 
 
 def get_duplex_metrics_output():
@@ -62,3 +63,15 @@ def get_qualimap_consensus_output():
             sample=samples,
         )
     return []
+
+
+def get_calc_duplex_metrics_input(wildcards):
+    if config.get("output_read_info", False):
+        return {
+            "main_input": f"results/QC/read_info/{wildcards.sample}.txt.gz",
+            "ref": config["ref"],
+        }
+    return {
+        "main_input": f"results/mapped_bams/{wildcards.sample}_mapped_merged.bam",
+        "ref": config["ref"],
+    }

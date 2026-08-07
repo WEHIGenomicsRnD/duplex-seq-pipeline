@@ -15,3 +15,4 @@ dependencies:
   - bioconductor-biostrings
   - bioconductor-genomicranges
   - bioconductor-iranges
+  - bioconductor-genomicalignments

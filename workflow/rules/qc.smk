@@ -275,8 +275,7 @@ rule get_read_info:
 
 rule calc_duplex_metrics:
     input:
-        rinfo="results/QC/read_info/{sample}.txt.gz",
-        ref=config["ref"],
+        unpack(get_calc_duplex_metrics_input),
     output:
         "results/QC/duplex_metrics/{sample}_metrics.csv",
     log:
@@ -289,6 +288,9 @@ rule calc_duplex_metrics:
         walltime=cluster["calcduplexmetrics"]["walltime"],
     params:
         metrics=config.get("duplex_metrics", "all"),
+        input_format="rinfo" if config.get("output_read_info", False) else "bam",
+        sort_mem=cluster["calcduplexmetrics"]["sort_mem"],
+        buffer_size=cluster["calcduplexmetrics"]["bam_chunk_size"],
         target_bed_arg=(
             f"--target_bed {config['target_bed']}" if config.get("target_bed", "") else ""
         ),
@@ -305,10 +307,12 @@ rule calc_duplex_metrics:
         fi
 
         calc-duplex-metrics \
-            --input {input.rinfo} \
+            --input {input.main_input} \
+            --input_format {params.input_format} \
             --output {output} \
             --ref_fasta {input.ref} \
             --metrics {params.metrics} \
             {params.target_bed_arg} \
+            $([ "{params.input_format}" = "bam" ] && echo "--sort_mem {params.sort_mem} --cores {threads} --bam_chunk_size {params.buffer_size}") \
             >> {log} 2>&1
         """

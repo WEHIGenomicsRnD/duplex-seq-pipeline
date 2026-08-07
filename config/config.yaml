@@ -11,6 +11,11 @@ multiqc_config: config/multiqc_config.yaml
 # qualimap is resource-intensive; set to true to enable
 run_qualimap: false
 
+# output read_info files (results/QC/read_info/)
+# if true, calc_duplex_metrics will use read_info output as input
+# if false (default), calc_duplex_metrics will calculate directly from the BAM
+output_read_info: false
+
 # reference genome fasta
 ref: 'ref/Ecoli_strain_BL21_genome.fasta' 
 

@@ -5,4 +5,4 @@ dependencies:
   - multiqc =1.14
   - pip
   - pip:
-      - git+https://github.com/WEHIGenomicsRnD/duplex-multiqc.git@7b85c22ede74507b48c595a9cd63167dd2046b25
+      - git+https://github.com/WEHIGenomicsRnD/duplex-multiqc.git@41ab7fbcd85cefaab7025450544e15f8cc6ecd41

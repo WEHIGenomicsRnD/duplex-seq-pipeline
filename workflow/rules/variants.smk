@@ -105,7 +105,7 @@ elif variant_caller == "nvc":
        log:
            "logs/filter_vcf_{sample}.log",
        conda:
-           "../envs/get_read_info.yaml"
+           "../envs/python_numpy_pandas.yaml"
        threads: 1
        resources:
            mem_mb=cluster["varscan"]["mem_mb"],
