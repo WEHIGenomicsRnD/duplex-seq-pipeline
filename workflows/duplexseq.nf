@@ -4,6 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+include { GUNZIP as GUNZIP_FASTA } from '../modules/nf-core/gunzip/main'
 include { PREPARE_REFERENCE } from '../subworkflows/local/prepare_reference/main'
 include { FASTQ_ALIGN_UMI } from '../subworkflows/local/fastq_align_umi/main'
 include { softwareVersionsToYAML } from '../subworkflows/local/utils_pipeline/main'
@@ -21,8 +22,17 @@ workflow DUPLEXSEQ {
     main:
 
     // reference files; indexes that are not supplied are built
-    def ref_meta = [id: file(params.fasta).baseName]
-    ch_fasta = channel.fromPath(params.fasta, checkIfExists: true).map { fasta -> [ref_meta, fasta] }
+    def ref_meta = [id: file(params.fasta.replaceFirst(/\.gz$/, '')).baseName]
+    ch_fasta_input = channel.fromPath(params.fasta, checkIfExists: true)
+        .map { fasta -> [ref_meta, fasta] }
+        .branch { _meta, fasta ->
+            gzipped: fasta.name.endsWith('.gz')
+            plain: true
+        }
+
+    // a gzipped reference is decompressed (samtools faidx and bwa need plain or bgzip FASTA)
+    GUNZIP_FASTA(ch_fasta_input.gzipped)
+    ch_fasta = ch_fasta_input.plain.mix(GUNZIP_FASTA.out.gunzip)
     ch_fasta_fai = params.fasta_fai ? channel.fromPath(params.fasta_fai, checkIfExists: true).map { fai -> [ref_meta, fai] } : channel.empty()
     ch_dict = params.dict ? channel.fromPath(params.dict, checkIfExists: true).map { dict -> [ref_meta, dict] } : channel.empty()
     ch_bwa_index = params.bwa ? channel.fromPath(params.bwa, checkIfExists: true, type: 'dir').map { index -> [ref_meta, index] } : channel.empty()

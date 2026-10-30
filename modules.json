@@ -35,6 +35,11 @@
                         "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
                         "installed_by": ["modules"]
                     },
+                    "gunzip": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
                     "picard/createsequencedictionary": {
                         "branch": "master",
                         "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",

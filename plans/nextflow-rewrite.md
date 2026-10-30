@@ -216,7 +216,7 @@ Differences that change outputs:
 | `NanoMB1Rep1_HJK2GDSX3_sampled_R1.fastq.gz` | 43,286 reads, 3.5 MB |
 | `NanoMB1Rep1_HJK2GDSX3_sampled_R2.fastq.gz` | 43,286 reads, 3.6 MB |
 
-- **What it is:** a 1 kb window of the E. coli ATCC 10798 duplex sequencing data (contig `2e914854fabb46b9_1`, positions 10,001–11,000, extracted by `extract_region_reads.sh` in the Snakemake repo; the log confirms 43,286 read pairs overlapping the region), with every read pair in the window kept so UMI families stay at full depth.
+- **What it is:** a 1 kb window of the E. coli ATCC 10798 duplex sequencing data (43,286 read pairs overlapping a 1 kb window, extracted by `extract_region_reads.sh` in the Snakemake repo; all reads map to contig `NARG01000009.1` of the test reference), with every read pair in the window kept so UMI families stay at full depth.
   - This is the "take a region, not a random fraction" approach: random thinning (`samtools view -s`) would leave almost no duplexes with `min_reads '4 2 2'`.
 - **Read structure:** NanoSeq, `3M2S146T 3M2S146T`.
 - **Checked in the files:**
@@ -229,10 +229,10 @@ Differences that change outputs:
 
 **Still needed (not in the repo):**
 
-1. **Reference FASTA** (found): `~/projects/duplex-seq-pipeline/ref/Escherichia_coli_ATCC_10798.fasta` (4.8 MB, 2 contigs: `2e914854fabb46b9_1` and `_2`, both circular; a bwa index exists next to it). **The strain is ATCC 10798, not BL21; the plan's earlier BL21 references were wrong.**
+1. **Reference FASTA** (done): `tests/data/GCA_002087985.1_ASM208798v1_genomic.fna.gz` (GenBank assembly ASM208798v1 of E. coli ATCC 10798, 64 contigs; **plain gzip, not bgzip**, so the workflow decompresses it with `GUNZIP_FASTA` before indexing). **The strain is ATCC 10798, not BL21; the plan's earlier BL21 references were wrong.** An earlier private copy of the reference (2 circular contigs) was dropped from the repo because its licence could not be confirmed; its contig names differ, so window coordinates from `extract_region_reads.sh` do not apply to the new reference.
    - Copy it (gzipped, about 1.4 MB) into `tests/data/` for the test profile; bwa indexing takes seconds, so no prebuilt index is committed.
-   - The FASTQs were produced by aligning the full-genome reads to this reference and pulling pairs overlapping `2e914854fabb46b9_1:10001-11000`. Mates of those pairs may map outside the window (insert sizes are mostly 237–353 bp, but some are much larger), so keep the whole genome rather than a slice.
-2. **`target.bed`**: a sub-window inside the 1 kb (for example `2e914854fabb46b9_1 10201 10800`) (exercises `--target_bed`). Can be generated once the window coordinates are known.
+   - The FASTQs were produced by aligning the full-genome reads to a reference and pulling pairs overlapping a 1 kb window. Mates of those pairs may map outside the window (insert sizes are mostly 237–353 bp, but some are much larger), so keep the whole genome rather than a slice. Against the new reference the read counts are identical (86,572 primary records, 99.72% mapped), with essentially all reads on `NARG01000009.1` (around 108,900–111,500).
+2. **`target.bed`**: a sub-window inside the 1 kb on `NARG01000009.1` (exercises `--target_bed`). The exact window must be re-derived from read coverage on the new reference.
 3. **`umis.txt`** (optional): the NanoSeq 3-mer whitelist, to exercise CorrectUmis. If there is no real whitelist, generate all 64 ACGT 3-mers; that is not a realistic test, because every UMI is then valid, but it does run the step. Without it, `--umis` is untested.
 4. **Second sample** (optional): a different window, or the same FASTQs under a second sample name, to test multi-sample MultiQC merging. Same-FASTQ duplication is cheap and fine for a smoke test.
 
@@ -291,13 +291,13 @@ Checked against this repo and the login node the session runs on.
 
 **Missing: needs you**
 
-| #   | Item                                                               | Blocks                               | Notes                                                                                                                                                                                        |
-| --- | ------------------------------------------------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | ~~Reference FASTA and window coordinates~~                         |                                      | **Found**: ATCC 10798 FASTA in `~/projects/duplex-seq-pipeline/ref/`, window `2e914854fabb46b9_1:10001-11000` from `extract_region_reads.sh`. Still to do: copy the FASTA into `tests/data/` |
-| 2   | ~~Read length: 150 bp data vs `3M2S146T`~~                         |                                      | **Resolved**: fgbio truncates the last segment; no change needed (section 6)                                                                                                                 |
-| 3   | `umis.txt` whitelist (optional)                                    | CorrectUmis test only                | Can be skipped for session 1                                                                                                                                                                 |
-| 4   | calc-duplex-metrics image: does `0.2.0` have BAM mode and 39fc6c9? | `CALC_DUPLEX_METRICS` container tag  | Needs a check of that repo, or cut `0.2.1`                                                                                                                                                   |
-| 5   | duplex-multiqc container and the plugin update for MultiQC 1.3x    | Real MultiQC run with duplex metrics | You said you will do the plugin update; until then session 1 can use plain MultiQC and skip the duplex section                                                                               |
+| #   | Item                                                               | Blocks                               | Notes                                                                                                                                                |
+| --- | ------------------------------------------------------------------ | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | ~~Reference FASTA and window coordinates~~                         |                                      | **Done**: `GCA_002087985.1` (ATCC 10798) FASTA in `tests/data/`; reads map to `NARG01000009.1`. Window coordinates on this reference still to derive |
+| 2   | ~~Read length: 150 bp data vs `3M2S146T`~~                         |                                      | **Resolved**: fgbio truncates the last segment; no change needed (section 6)                                                                         |
+| 3   | `umis.txt` whitelist (optional)                                    | CorrectUmis test only                | Can be skipped for session 1                                                                                                                         |
+| 4   | calc-duplex-metrics image: does `0.2.0` have BAM mode and 39fc6c9? | `CALC_DUPLEX_METRICS` container tag  | Needs a check of that repo, or cut `0.2.1`                                                                                                           |
+| 5   | duplex-multiqc container and the plugin update for MultiQC 1.3x    | Real MultiQC run with duplex metrics | You said you will do the plugin update; until then session 1 can use plain MultiQC and skip the duplex section                                       |
 
 **Environment (re-checked; now usable, with workarounds)**
 
