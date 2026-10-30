@@ -1,0 +1,31 @@
+name: Lint
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: nf-core/setup-nextflow@v2
+        with:
+          version: "25.10.0"
+      - name: Run pre-commit
+        uses: j178/prek-action@v1
+
+  schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nf-core/setup-nextflow@v2
+        with:
+          version: "25.10.0"
+      - name: Check that the config loads and the schema covers all parameters
+        run: |
+          nextflow config -flat . > /dev/null
+          nextflow run . --help > /dev/null

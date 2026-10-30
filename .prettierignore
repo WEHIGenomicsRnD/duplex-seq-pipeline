@@ -1,0 +1,14 @@
+.nextflow*
+work/
+results/
+.DS_Store
+testing/
+testing*
+*.pyc
+modules/nf-core/
+subworkflows/nf-core/
+workflow/
+tests/data/
+dag.pdf
+config/
+slurm/

@@ -1,0 +1,41 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/mcmero/duplex-seq-pipeline/main/assets/schema_input.json",
+    "title": "mcmero/duplex-seq-pipeline pipeline - params.input schema",
+    "description": "Schema for the file provided with params.input",
+    "type": "array",
+    "uniqueEntries": ["sample"],
+    "items": {
+        "type": "object",
+        "properties": {
+            "sample": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "meta": ["id"]
+            },
+            "fastq_1": {
+                "type": "string",
+                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
+                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+            },
+            "fastq_2": {
+                "type": "string",
+                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
+                "errorMessage": "FastQ file for reads 2 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+            },
+            "read_structure": {
+                "type": "string",
+                "pattern": "^\\S+( \\S+)?$",
+                "errorMessage": "Read structure must be one fgbio read structure per read, separated by a space, e.g. '3M2S146T 3M2S146T'",
+                "meta": ["read_structure"]
+            },
+            "umi_file": {
+                "type": "string",
+                "errorMessage": "UMI file path cannot contain spaces",
+                "pattern": "^\\S+$"
+            }
+        },
+        "required": ["sample", "fastq_1", "fastq_2"]
+    }
+}

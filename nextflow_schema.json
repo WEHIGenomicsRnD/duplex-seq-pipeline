@@ -1,0 +1,329 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/mcmero/duplex-seq-pipeline/main/nextflow_schema.json",
+    "title": "mcmero/duplex-seq-pipeline pipeline parameters",
+    "description": "Duplex sequencing (NanoSeq) analysis pipeline: UMI extraction, alignment, duplex consensus calling, QC and variant calling",
+    "type": "object",
+    "$defs": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "schema": "assets/schema_input.json",
+                    "mimetype": "text/csv",
+                    "pattern": "^\\S+\\.csv$",
+                    "description": "Path to a comma-separated samplesheet (columns: sample, fastq_1, fastq_2, optional read_structure and umi_file).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved. Use an absolute path for cloud storage.",
+                    "default": "results",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "publish_dir_mode": {
+                    "type": "string",
+                    "default": "copy",
+                    "description": "Method used to save pipeline results to the output directory.",
+                    "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
+                    "fa_icon": "fas fa-copy",
+                    "hidden": true
+                }
+            },
+            "required": ["input", "outdir"]
+        },
+        "reference_options": {
+            "title": "Reference options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Reference genome. Missing indexes are built by the pipeline.",
+            "properties": {
+                "fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
+                    "description": "Path to the reference genome FASTA file.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "fasta_fai": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional samtools faidx index of the FASTA. Built when not provided.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "dict": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional Picard sequence dictionary of the FASTA. Built when not provided.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "bwa": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Optional directory containing the bwa index of the FASTA (files named after the FASTA). Built when not provided.",
+                    "fa_icon": "fas fa-folder-open"
+                }
+            },
+            "required": ["fasta"]
+        },
+        "umi_options": {
+            "title": "UMI options",
+            "type": "object",
+            "fa_icon": "fas fa-barcode",
+            "description": "UMI extraction (fgbio ExtractUmisFromBam) and correction (fgbio CorrectUmis).",
+            "properties": {
+                "read_structure": {
+                    "type": "string",
+                    "default": "3M2S146T 3M2S146T",
+                    "description": "Read structure for each strand, e.g. 3M2S146T = 3 UMI bases, 2 skipped, 146 template bases. Can be overridden per sample in the samplesheet.",
+                    "fa_icon": "fas fa-ruler"
+                },
+                "molecular_index_tags": {
+                    "type": "string",
+                    "default": "ZA ZB",
+                    "description": "SAM tags in which to store the molecular indices (ExtractUmisFromBam --molecular-index-tags).",
+                    "fa_icon": "fas fa-tags"
+                },
+                "single_tag": {
+                    "type": "string",
+                    "default": "RX",
+                    "description": "Single tag into which to concatenate all molecular indices (ExtractUmisFromBam --single-tag).",
+                    "fa_icon": "fas fa-tag"
+                },
+                "umis": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "File of known UMI sequences, one per line, used to correct UMIs. Leave unset to skip correction. Can be overridden per sample in the samplesheet.",
+                    "fa_icon": "fas fa-file-alt"
+                },
+                "max_mismatches": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Maximum number of UMI mismatches (used only if correcting UMIs).",
+                    "fa_icon": "fas fa-sort-numeric-down"
+                },
+                "min_distance": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "Minimum distance in mismatches to the next best UMI (used only if correcting UMIs).",
+                    "fa_icon": "fas fa-sort-numeric-down"
+                }
+            }
+        },
+        "consensus_options": {
+            "title": "Consensus calling options",
+            "type": "object",
+            "fa_icon": "fas fa-layer-group",
+            "description": "Duplex consensus calling and filtering (fgbio GroupReadsByUmi, CallDuplexConsensusReads, FilterConsensusReads).",
+            "properties": {
+                "min_mapq": {
+                    "type": "integer",
+                    "default": 20,
+                    "description": "Minimum mapping quality used by GroupReadsByUmi (--min-map-q)."
+                },
+                "min_input_baseq": {
+                    "type": "integer",
+                    "default": 30,
+                    "description": "Minimum input base quality used by CallDuplexConsensusReads (--min-input-base-quality)."
+                },
+                "error_rate_pre_umi": {
+                    "type": "integer",
+                    "default": 45,
+                    "description": "Phred-scaled error rate for an error prior to the UMIs being integrated (CallDuplexConsensusReads --error-rate-pre-umi)."
+                },
+                "error_rate_post_umi": {
+                    "type": "integer",
+                    "default": 40,
+                    "description": "Phred-scaled error rate for an error after the UMIs have been integrated (CallDuplexConsensusReads --error-rate-post-umi)."
+                },
+                "min_reads": {
+                    "type": "string",
+                    "default": "4 2 2",
+                    "description": "Minimum number of reads supporting a consensus base/read (FilterConsensusReads --min-reads): total, then each strand."
+                },
+                "max_read_error_rate": {
+                    "type": "number",
+                    "default": 0.05,
+                    "description": "Maximum raw-read error rate across the entire consensus read (FilterConsensusReads --max-read-error-rate)."
+                },
+                "max_base_error_rate": {
+                    "type": "number",
+                    "default": 0.1,
+                    "description": "Maximum error rate for a single consensus base (FilterConsensusReads --max-base-error-rate)."
+                },
+                "min_base_quality": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "Mask consensus bases with quality below this threshold (FilterConsensusReads --min-base-quality)."
+                },
+                "max_no_call_fraction": {
+                    "type": "number",
+                    "default": 0.05,
+                    "description": "Maximum fraction of no-calls in the read after filtering (FilterConsensusReads --max-no-call-fraction)."
+                }
+            }
+        },
+        "qc_options": {
+            "title": "QC options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-bar",
+            "description": "Quality control and duplex metrics.",
+            "properties": {
+                "fastq_screen_config": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "FastQ Screen configuration file. FastQ Screen is skipped when unset."
+                },
+                "run_qualimap": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run Qualimap BAM QC on the mapped and consensus BAMs (resource-intensive)."
+                },
+                "duplex_metrics": {
+                    "type": "string",
+                    "default": "all",
+                    "description": "Metrics to calculate with calc-duplex-metrics: comma-separated individual metrics (frac_singletons, efficiency, drop_out_rate) and/or groups (gc, family)."
+                },
+                "target_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "BED file of target regions for calculating the on-target rate in capture experiments. Not passed to calc-duplex-metrics when unset."
+                },
+                "output_read_info": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Write read_info files; when true calc-duplex-metrics uses them as input instead of reading the BAM."
+                },
+                "multiqc_config": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Custom MultiQC configuration file."
+                },
+                "multiqc_title": {
+                    "type": "string",
+                    "description": "MultiQC report title."
+                },
+                "markdup_max_records_in_ram": {
+                    "type": "integer",
+                    "default": 100000,
+                    "description": "Picard MarkDuplicates MAX_RECORDS_IN_RAM."
+                },
+                "sort_mem": {
+                    "type": "string",
+                    "default": "4G",
+                    "description": "Memory for sort in calc-duplex-metrics BAM mode (--sort_mem)."
+                },
+                "bam_chunk_size": {
+                    "type": "integer",
+                    "default": 2000000,
+                    "description": "BAM records per streaming chunk in calc-duplex-metrics BAM mode (--bam_chunk_size)."
+                },
+                "read_info_buffer_size": {
+                    "type": "string",
+                    "default": "110G",
+                    "description": "Buffer size for sorting read_info (sort -S)."
+                }
+            }
+        },
+        "variant_calling_options": {
+            "title": "Variant calling options",
+            "type": "object",
+            "fa_icon": "fas fa-bug",
+            "description": "Duplex variant calling.",
+            "properties": {
+                "variant_caller": {
+                    "type": "string",
+                    "default": "nvc",
+                    "enum": ["nvc", "varscan"],
+                    "description": "Variant caller: nvc (naive variant caller) or varscan."
+                },
+                "min_coverage": {
+                    "type": "integer",
+                    "default": 4,
+                    "description": "Minimum duplex coverage to call a variant."
+                },
+                "min_reads2": {
+                    "type": "integer",
+                    "default": 2,
+                    "description": "Minimum supporting duplex reads to call a variant."
+                },
+                "min_vaf": {
+                    "type": "number",
+                    "default": 0.01,
+                    "description": "Minimum duplex VAF to call a variant."
+                },
+                "ploidy": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "Ploidy (only used with nvc)."
+                }
+            }
+        },
+        "generic_options": {
+            "title": "Generic options",
+            "type": "object",
+            "fa_icon": "fas fa-file-import",
+            "description": "Less common options for the pipeline, typically set in a config file.",
+            "properties": {
+                "validate_params": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Boolean whether to validate parameters against the schema at runtime.",
+                    "fa_icon": "fas fa-check-square",
+                    "hidden": true
+                },
+                "monochrome_logs": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Do not use coloured log outputs.",
+                    "fa_icon": "fas fa-palette",
+                    "hidden": true
+                },
+                "trace_report_suffix": {
+                    "type": "string",
+                    "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
+                    "fa_icon": "far calendar",
+                    "hidden": true
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/reference_options"
+        },
+        {
+            "$ref": "#/$defs/umi_options"
+        },
+        {
+            "$ref": "#/$defs/consensus_options"
+        },
+        {
+            "$ref": "#/$defs/qc_options"
+        },
+        {
+            "$ref": "#/$defs/variant_calling_options"
+        },
+        {
+            "$ref": "#/$defs/generic_options"
+        }
+    ]
+}
