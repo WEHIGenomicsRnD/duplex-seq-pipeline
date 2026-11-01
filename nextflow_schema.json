@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/mcmero/duplex-seq-pipeline/main/nextflow_schema.json",
-    "title": "mcmero/duplex-seq-pipeline pipeline parameters",
+    "$id": "https://raw.githubusercontent.com/WEHIGenomicsRnD/duplex-seq-pipeline/main/nextflow_schema.json",
+    "title": "WEHIGenomicsRnD/duplex-seq-pipeline pipeline parameters",
     "description": "Duplex sequencing (NanoSeq) analysis pipeline: UMI extraction, alignment, duplex consensus calling, QC and variant calling",
     "type": "object",
     "$defs": {

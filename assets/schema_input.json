@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/mcmero/duplex-seq-pipeline/main/assets/schema_input.json",
-    "title": "mcmero/duplex-seq-pipeline pipeline - params.input schema",
+    "$id": "https://raw.githubusercontent.com/WEHIGenomicsRnD/duplex-seq-pipeline/main/assets/schema_input.json",
+    "title": "WEHIGenomicsRnD/duplex-seq-pipeline pipeline - params.input schema",
     "description": "Schema for the file provided with params.input",
     "type": "array",
     "uniqueEntries": ["sample"],

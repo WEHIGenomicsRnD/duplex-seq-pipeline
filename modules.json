@@ -1,6 +1,6 @@
 {
-    "name": "mcmero/duplex-seq-pipeline",
-    "homePage": "https://github.com/mcmero/duplex-seq-pipeline",
+    "name": "WEHIGenomicsRnD/duplex-seq-pipeline",
+    "homePage": "https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {

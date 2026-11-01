@@ -199,7 +199,7 @@ Differences that change outputs:
   - consensus samtools stats/flagstat and optional consensus qualimap;
   - `*_metrics.csv` from calc_duplex_metrics;
   - software versions YAML and the params summary.
-- **Naming:** consensus outputs get `ext.prefix = "${meta.id}_consensus"`; raw outputs keep `${meta.id}` (FastQC gives `${meta.id}_R1`/`_R2`).
+- **Naming:** `WEHIGenomicsRnD/duplex-seq-pipeline` is canonical (decided by the user) and is used in `manifest.name`, the schema `$id`s and `modules.json`. Contributors are not listed in the manifest.
 - **`assets/multiqc_config.yml`:**
   - `table_sample_merge: { "R1": "_R1", "R2": "_R2", "Consensus": "_consensus" }` groups R1, R2, raw and consensus as sub-rows under one sample in the General Statistics table (needs MultiQC ≥ 1.22);
   - `extra_fn_clean_exts` is limited to `_mapped_merged`, so `_consensus` is not stripped and raw and consensus samples don't collide in the plots;
@@ -232,7 +232,7 @@ Differences that change outputs:
 1. **Reference FASTA** (done): `tests/data/GCA_002087985.1_ASM208798v1_genomic.fna.gz` (GenBank assembly ASM208798v1 of E. coli ATCC 10798, 64 contigs; **plain gzip, not bgzip**, so the workflow decompresses it with `GUNZIP_FASTA` before indexing). **The strain is ATCC 10798, not BL21; the plan's earlier BL21 references were wrong.** An earlier private copy of the reference (2 circular contigs) was dropped from the repo because its licence could not be confirmed; its contig names differ, so window coordinates from `extract_region_reads.sh` do not apply to the new reference.
    - Copy it (gzipped, about 1.4 MB) into `tests/data/` for the test profile; bwa indexing takes seconds, so no prebuilt index is committed.
    - The FASTQs were produced by aligning the full-genome reads to a reference and pulling pairs overlapping a 1 kb window. Mates of those pairs may map outside the window (insert sizes are mostly 237–353 bp, but some are much larger), so keep the whole genome rather than a slice. Against the new reference the read counts are identical (86,572 primary records, 99.72% mapped), with essentially all reads on `NARG01000009.1` (around 108,900–111,500).
-2. **`target.bed`**: a sub-window inside the 1 kb on `NARG01000009.1` (exercises `--target_bed`). The exact window must be re-derived from read coverage on the new reference.
+2. **`target.bed`**: a sub-window inside the 1 kb on `NARG01000009.1` (exercises `--target_bed`). Done: `tests/data/target.bed` is `NARG01000009.1 109900 110700`, inside the plateau of ~9,000–12,700× coverage (about 109,800–110,900) and wired into `conf/test.config`.
 3. **`umis.txt`** (optional): the NanoSeq 3-mer whitelist, to exercise CorrectUmis. If there is no real whitelist, generate all 64 ACGT 3-mers; that is not a realistic test, because every UMI is then valid, but it does run the step. Without it, `--umis` is untested.
 4. **Second sample** (optional): a different window, or the same FASTQs under a second sample name, to test multi-sample MultiQC merging. Same-FASTQ duplication is cheap and fine for a smoke test.
 
@@ -291,13 +291,13 @@ Checked against this repo and the login node the session runs on.
 
 **Missing: needs you**
 
-| #   | Item                                                               | Blocks                               | Notes                                                                                                                                                |
-| --- | ------------------------------------------------------------------ | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | ~~Reference FASTA and window coordinates~~                         |                                      | **Done**: `GCA_002087985.1` (ATCC 10798) FASTA in `tests/data/`; reads map to `NARG01000009.1`. Window coordinates on this reference still to derive |
-| 2   | ~~Read length: 150 bp data vs `3M2S146T`~~                         |                                      | **Resolved**: fgbio truncates the last segment; no change needed (section 6)                                                                         |
-| 3   | `umis.txt` whitelist (optional)                                    | CorrectUmis test only                | Can be skipped for session 1                                                                                                                         |
-| 4   | calc-duplex-metrics image: does `0.2.0` have BAM mode and 39fc6c9? | `CALC_DUPLEX_METRICS` container tag  | Needs a check of that repo, or cut `0.2.1`                                                                                                           |
-| 5   | duplex-multiqc container and the plugin update for MultiQC 1.3x    | Real MultiQC run with duplex metrics | You said you will do the plugin update; until then session 1 can use plain MultiQC and skip the duplex section                                       |
+| #   | Item                                                               | Blocks                               | Notes                                                                                                                                                      |
+| --- | ------------------------------------------------------------------ | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | ~~Reference FASTA and window coordinates~~                         |                                      | **Done**: `GCA_002087985.1` (ATCC 10798) FASTA in `tests/data/`; reads map to `NARG01000009.1`. Target BED (`tests/data/target.bed`) derived from coverage |
+| 2   | ~~Read length: 150 bp data vs `3M2S146T`~~                         |                                      | **Resolved**: fgbio truncates the last segment; no change needed (section 6)                                                                               |
+| 3   | `umis.txt` whitelist (optional)                                    | CorrectUmis test only                | Can be skipped for session 1                                                                                                                               |
+| 4   | calc-duplex-metrics image: does `0.2.0` have BAM mode and 39fc6c9? | `CALC_DUPLEX_METRICS` container tag  | Needs a check of that repo, or cut `0.2.1`                                                                                                                 |
+| 5   | duplex-multiqc container and the plugin update for MultiQC 1.3x    | Real MultiQC run with duplex metrics | You said you will do the plugin update; until then session 1 can use plain MultiQC and skip the duplex section                                             |
 
 **Environment (re-checked; now usable, with workarounds)**
 
