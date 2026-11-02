@@ -436,3 +436,20 @@ nextflow run . -profile test,<engine> --outdir results \
 ```
 
 The index directory is outside the repo (the sandbox only keeps what is written to a mounted path, so `/vast/scratch/users/cmero.ma/fastq_screen_test_db` is a mount set up by the user; elsewhere under `/vast/scratch` writes are lost on reset). Verified (apptainer, test profile): the index built with the bowtie2 2.5.3 module (15 MB) is read by the container's bowtie2 (fastq-screen 0.16.0); R1 and R2 hit `ecoli_atcc10798` at 99.45% and 98.13% one-hit-one-genome, and MultiQC gets a FastQ Screen section. A folder without `fastq_screen.conf` and a nonexistent folder both fail with clear errors, and the pipeline runs unchanged without the parameter.
+
+## Session 3 (in progress): duplex-multiqc container and duplex metrics
+
+**Done**
+
+- `MULTIQC` runs from `ghcr.io/wehigenomicsrnd/duplex-multiqc:0.1.0` (`conf/modules.config`, with a matching conda environment in `assets/multiqc_duplex_environment.yml`; the plugin git tag is `0.1.0`). Nextflow pulls the image through apptainer; MultiQC 1.35 and plugin 0.1.0 are registered (module `duplex_seq`, hook `execution_start`).
+- Local module `CALC_DUPLEX_METRICS` (`modules/local/calcduplexmetrics/`, image `ghcr.io/wehigenomicsrnd/calculate-duplex-metrics:0.2.0`, input BAM mode on the mapped BAM like Snakemake, `--target_bed` from `tests/data/target.bed`), called from the `QC` subworkflow; output in `QC/duplex_metrics/`. The tool version recorded in `software_versions.yml` is the image tag (the R package itself reports 0.1.0 inside the 0.2.0 image).
+- `assets/multiqc_config.yml` (always used; `--multiqc_config` is applied on top): duplex section first, `table_sample_merge` for `_R1`/`_R2`/`_consensus`, `extra_fn_clean_exts: _mapped_merged`. Verified: raw and consensus rows merge under one sample (`NanoMB1Rep1`, `NanoMB1Rep1 Consensus`).
+- Real apptainer run: 29 processes succeed; the duplex metrics CSV has the plugin's `sample,metric,value` format (efficiency 0.0455, drop-out 0.329, on-target rate 0.869 with the test BED).
+
+**Open: resume testing here tomorrow**
+
+1. **The 0.1.0 container is broken for the plugin.** The `duplex_seq` module crashes with `ModuleNotFoundError: No module named 'matplotlib'`. The plugin declares `matplotlib`, but the image does not contain it, so it was built without the plugin's dependencies. MultiQC catches the error, exits 0 and writes a report **without the duplex section**, so the pipeline passes silently. Confirmed by running the same MultiQC inputs with matplotlib wheels added from a temp directory: the plugin then processes the CSV and writes the duplex plots (efficiency, drop-out rate, family sizes, GC, on-target). Needs a rebuilt image in the plugin repo (for example 0.1.1) with matplotlib installed; then bump the tag in `conf/modules.config` and `assets/multiqc_duplex_environment.yml`. Also consider a check that the report really contains the duplex section (nf-test assertion, or MultiQC `--strict`).
+2. **Duplex metrics sample name.** The plugin takes the sample name from the CSV column, which bypasses MultiQC's name cleaning, so the metrics currently show up as `NanoMB1Rep1_mapped_merged` (a separate row). Plan: pass `--sample ${meta.id}` to `calc-duplex-metrics` in the module (small deviation from the Snakemake CSV, which uses the BAM name) so the metrics merge into the `NanoMB1Rep1` row. Not applied yet.
+3. `CALC_DUPLEX_METRICS` has no conda route (the R package is not on conda); the container is the supported way to run it.
+4. `--output_read_info` (rinfo input, `GET_READ_INFO`) is still not implemented; the parameter is accepted and ignored.
+5. Still to do: variant calling (`nvc`, `varscan`, `filter_vcf`), local `meta.yml` files, nf-test, CI (including the FastQ Screen database build), README update, Snakemake parity run.

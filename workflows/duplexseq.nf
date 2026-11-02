@@ -84,13 +84,18 @@ workflow DUPLEXSEQ {
         error("--fastq_screen_db must be a folder containing 'fastq_screen.conf': ${params.fastq_screen_db}")
     }
     ch_fastq_screen_db = params.fastq_screen_db ? channel.value(file(params.fastq_screen_db, checkIfExists: true, type: 'dir')) : channel.empty()
-    ch_multiqc_config = params.multiqc_config ? file(params.multiqc_config, checkIfExists: true) : []
+    // the packaged MultiQC config is always used; --multiqc_config is added on top of it
+    ch_multiqc_config = params.multiqc_config
+        ? [file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true), file(params.multiqc_config, checkIfExists: true)]
+        : file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true)
+    ch_target_bed = params.target_bed ? file(params.target_bed, checkIfExists: true) : []
 
     QC(
         ch_reads,
         FASTQ_ALIGN_UMI.out.bam_bai,
         CONSENSUS.out.filtered_bam_bai,
         ch_fasta_fai,
+        ch_target_bed,
         ch_fastq_screen_db,
         params.run_qualimap,
         ch_multiqc_config,

@@ -1,6 +1,6 @@
 //
-// QC: FastQC, FastQ Screen, MarkDuplicates metrics, samtools stats/flagstat and Qualimap on the
-// mapped and consensus BAMs, summarised in a single MultiQC report.
+// QC: FastQC, FastQ Screen, MarkDuplicates metrics, samtools stats/flagstat, Qualimap and the duplex
+// metrics on the mapped and consensus BAMs, summarised in a single MultiQC report.
 // Consensus outputs get a `_consensus` prefix so they are separate samples in MultiQC.
 //
 
@@ -13,6 +13,7 @@ include { QUALIMAP_BAMQC } from '../../../modules/nf-core/qualimap/bamqc/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_CONSENSUS } from '../../../modules/nf-core/samtools/stats/main'
 include { SAMTOOLS_FLAGSTAT as SAMTOOLS_FLAGSTAT_CONSENSUS } from '../../../modules/nf-core/samtools/flagstat/main'
 include { QUALIMAP_BAMQC as QUALIMAP_BAMQC_CONSENSUS } from '../../../modules/nf-core/qualimap/bamqc/main'
+include { CALC_DUPLEX_METRICS } from '../../../modules/local/calcduplexmetrics/main'
 include { MULTIQC } from '../../../modules/nf-core/multiqc/main'
 
 workflow QC {
@@ -21,9 +22,10 @@ workflow QC {
     bam_bai // channel: [ val(meta), path(bam), path(bai) ] mapped, UMI-tagged BAM
     consensus_bam_bai // channel: [ val(meta), path(bam), path(bai) ] filtered consensus BAM
     fasta_fai // channel: [ val(meta), path(fasta), path(fai) ]
+    target_bed // value: path(bed) or [] (enables the on-target duplex metrics)
     fastq_screen_db // channel: path(dir with fastq_screen.conf), or empty to skip FastQ Screen
     run_qualimap // value: boolean
-    multiqc_config // value: path(config) or []
+    multiqc_config // value: path(config) or [path(config), path(config)...]
 
     main:
 
@@ -38,6 +40,13 @@ workflow QC {
     SAMTOOLS_STATS(bam_bai, fasta_fai)
     SAMTOOLS_FLAGSTAT(bam_bai)
 
+    // duplex metrics are computed from the mapped BAM (as in Snakemake), not the consensus BAM
+    CALC_DUPLEX_METRICS(
+        bam_bai.map { meta, bam, _bai -> [meta, bam] },
+        fasta_fai.map { meta, fasta, _fai -> [meta, fasta] },
+        target_bed,
+    )
+
     // consensus BAM
     SAMTOOLS_STATS_CONSENSUS(consensus_bam_bai, fasta_fai)
     SAMTOOLS_FLAGSTAT_CONSENSUS(consensus_bam_bai)
@@ -48,6 +57,7 @@ workflow QC {
         .mix(PICARD_MARKDUPLICATES.out.metrics.map { _meta, f -> f })
         .mix(SAMTOOLS_STATS.out.stats.map { _meta, f -> f })
         .mix(SAMTOOLS_FLAGSTAT.out.flagstat.map { _meta, f -> f })
+        .mix(CALC_DUPLEX_METRICS.out.csv.map { _meta, f -> f })
         .mix(SAMTOOLS_STATS_CONSENSUS.out.stats.map { _meta, f -> f })
         .mix(SAMTOOLS_FLAGSTAT_CONSENSUS.out.flagstat.map { _meta, f -> f })
 

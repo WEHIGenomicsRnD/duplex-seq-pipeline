@@ -1,0 +1,19 @@
+# Packaged MultiQC config; a user config (--multiqc_config) is applied on top of it.
+
+# Duplex metrics come first
+report_section_order:
+  duplex_seq:
+    order: 1000
+
+# Raw reads and consensus reads of one sample are shown as sub-rows of the same sample
+# (needs MultiQC >= 1.22)
+table_sample_merge:
+  R1: "_R1"
+  R2: "_R2"
+  Consensus: "_consensus"
+
+# "_mapped_merged" (and everything after it) is cut from sample names, so the mapped BAM outputs
+# are named after the sample. "_consensus" is deliberately not cut, so the consensus outputs stay
+# separate samples and do not collide with the raw ones in the plots.
+extra_fn_clean_exts:
+  - "_mapped_merged"

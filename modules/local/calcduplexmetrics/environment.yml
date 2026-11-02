@@ -1,0 +1,21 @@
+# The R package is not on conda: the container (ghcr.io/wehigenomicsrnd/calculate-duplex-metrics)
+# is the supported way to run this module. These are the dependencies of the Snakemake environment;
+# install WEHIGenomicsRnD/calculate-duplex-metrics with remotes::install_github() on top of them.
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - r-base=4.4.1
+  - r-remotes
+  - r-devtools
+  - r-argparse
+  - r-data.table
+  - r-magrittr
+  - r-seqinr
+  - r-r.utils
+  - bioconductor-genomeinfodb
+  - bioconductor-rsamtools
+  - bioconductor-biostrings
+  - bioconductor-genomicranges
+  - bioconductor-iranges
+  - bioconductor-genomicalignments
