@@ -7,6 +7,8 @@
 include { GUNZIP as GUNZIP_FASTA } from '../modules/nf-core/gunzip/main'
 include { PREPARE_REFERENCE } from '../subworkflows/local/prepare_reference/main'
 include { FASTQ_ALIGN_UMI } from '../subworkflows/local/fastq_align_umi/main'
+include { CONSENSUS } from '../subworkflows/local/consensus/main'
+include { QC } from '../subworkflows/local/qc/main'
 include { softwareVersionsToYAML } from '../subworkflows/local/utils_pipeline/main'
 
 /*
@@ -43,12 +45,55 @@ workflow DUPLEXSEQ {
     ch_reads = ch_samplesheet.map { meta, reads, _umis -> [meta, reads] }
     ch_umis = ch_samplesheet.map { meta, _reads, umis -> [meta, umis] }
 
+    ch_fasta_value = ch_fasta.first()
+
     FASTQ_ALIGN_UMI(
         ch_reads,
         ch_umis,
-        ch_fasta.first(),
+        ch_fasta_value,
         PREPARE_REFERENCE.out.dict,
         PREPARE_REFERENCE.out.bwa_index,
+    )
+
+    // fasta bundled with its indexes, as expected by the fgbio, picard and samtools modules
+    ch_fasta_fai = ch_fasta_value
+        .combine(PREPARE_REFERENCE.out.fai)
+        .map { meta, fasta, _meta_fai, fai -> [meta, fasta, fai] }
+        .first()
+    ch_fasta_fai_dict = ch_fasta_value
+        .combine(PREPARE_REFERENCE.out.fai)
+        .combine(PREPARE_REFERENCE.out.dict)
+        .map { meta, fasta, _meta_fai, fai, _meta_dict, dict -> [meta, fasta, fai, dict] }
+        .first()
+
+    // duplex consensus calling, realignment and filtering
+    CONSENSUS(
+        FASTQ_ALIGN_UMI.out.bam,
+        ch_fasta_value,
+        ch_fasta_fai_dict,
+        PREPARE_REFERENCE.out.dict,
+        PREPARE_REFERENCE.out.bwa_index,
+        params.min_input_baseq,
+        params.min_reads,
+        params.min_base_quality,
+        params.max_base_error_rate,
+    )
+
+    // QC and a single MultiQC report; FastQ Screen only runs when a config is given
+    if (params.fastq_screen_config && file(params.fastq_screen_config).name != 'fastq_screen.conf') {
+        error("--fastq_screen_config must point to a file named 'fastq_screen.conf' (its directory is staged for FastQ Screen)")
+    }
+    ch_fastq_screen_db = params.fastq_screen_config ? channel.value(file(params.fastq_screen_config, checkIfExists: true).parent) : channel.empty()
+    ch_multiqc_config = params.multiqc_config ? file(params.multiqc_config, checkIfExists: true) : []
+
+    QC(
+        ch_reads,
+        FASTQ_ALIGN_UMI.out.bam_bai,
+        CONSENSUS.out.filtered_bam_bai,
+        ch_fasta_fai,
+        ch_fastq_screen_db,
+        params.run_qualimap,
+        ch_multiqc_config,
     )
 
     // software versions from the `versions` topic
@@ -56,5 +101,7 @@ workflow DUPLEXSEQ {
 
     emit:
     bam = FASTQ_ALIGN_UMI.out.bam // channel: [ val(meta), path(bam) ]
+    consensus_bam = CONSENSUS.out.filtered_bam_bai // channel: [ val(meta), path(bam), path(bai) ]
+    multiqc_report = QC.out.report // channel: [ val(meta), path(html) ]
     versions = ch_versions // channel: path(software_versions.yml)
 }

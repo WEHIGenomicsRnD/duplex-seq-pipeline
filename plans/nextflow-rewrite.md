@@ -384,7 +384,7 @@ Checked against this repo and the login node the session runs on.
 - Added `bam_align` as a shared subworkflow, so the consensus step can reuse the realignment.
 - Samplesheet FASTQ and UMI-file paths are plain strings in `schema_input.json` (no `format: file-path`/`exists`), and `utils_pipeline` resolves relative paths against the samplesheet's directory: nf-schema resolves relative paths against the launch directory, so the committed test samplesheet would not have worked otherwise. Missing files are reported by `file(..., checkIfExists: true)`.
 - Test config uses `${projectDir}/tests/data/...` (no URLs), as decided in section 6.
-- `ext.args` for FastqToSam sets `--SAMPLE_NAME ${meta.id} --READ_GROUP_NAME null` (the module otherwise takes the sample name from `ext.prefix`).
+- `ext.args` for FastqToSam sets `--SAMPLE_NAME ${meta.id} --READ_GROUP_NAME ${meta.id}` (the module otherwise takes the sample name from `ext.prefix`). Session 1 used `null` as in Snakemake; see session 2 for why that was changed.
 
 **Open points and things to know for session 2**
 
@@ -395,3 +395,31 @@ Checked against this repo and the login node the session runs on.
 - **Git:** nothing is committed. The new files are marked intent-to-add (`git add -N`) so pre-commit could see them, and the index still holds the earlier `nf-pipeline/` renames.
 - **Resources:** `conf/base.config` uses the Snakemake `cluster.yaml` values (picard/GATK 96 GB, fgbio 64 GB, bwa 16 CPUs / 36 GB); `conf/test.config` caps everything at 4 CPUs / 12 GB.
 - **Session 2 starting point:** the `consensus` subworkflow can call `BAM_ALIGN` with the consensus unmapped BAM and `ext.prefix = "${meta.id}_consensus"`; install `fgbio/groupreadsbyumi`, `fgbio/callduplexconsensusreads`, `fgbio/filterconsensusreads`, `picard/markduplicates`, `samtools/stats`, `samtools/flagstat`, `qualimap/bamqc` and `multiqc` with the same `nf-core modules install` recipe (needs the temporary `.nf-core.yml`).
+
+## Session 2 results
+
+**Done**
+
+- nf-core modules installed: `fgbio/groupreadsbyumi`, `fgbio/callduplexconsensusreads`, `fgbio/filterconsensusreads`, `picard/markduplicates`, `picard/sortsam`, `samtools/stats`, `samtools/flagstat`, `qualimap/bamqc`, `multiqc`, `gunzip` (the latter in the reference commit).
+- `CONSENSUS` subworkflow: GroupReadsByUmi (`paired`, `--edits 1 --min-map-q`) → CallDuplexConsensusReads → queryname sort → `BAM_ALIGN` (aliased `BAM_ALIGN_CONSENSUS`, `_consensus` prefixes) → queryname sort → FilterConsensusReads → `samtools index`.
+- `QC` subworkflow: FastQC, FastQ Screen (only when `--fastq_screen_config` is set), MarkDuplicates metrics, samtools stats/flagstat, optional Qualimap (`--run_qualimap`) on the mapped and the consensus BAM, and **one** MultiQC report. Consensus outputs carry a `_consensus` prefix so they are separate samples in MultiQC.
+- Published layout: `mapped_bams/`, `grouped_by_umi/`, `consensus/`, `QC/{fastqc,fastqscreen,mark_duplicates,samtools,qualimap,consensus,multiqc}/`.
+
+**Verified** (apptainer, test profile, `--run_qualimap`): the full pipeline completes; the consensus BAM has 4,694 records (3,580 after filtering), is coordinate-sorted and indexed; MultiQC lists FastQC, Picard, samtools and Qualimap, with raw and consensus as separate samples. Stub runs (with and without `--run_qualimap`), lint and pre-commit pass.
+
+**Deviations from Snakemake (and why)**
+
+- **Read group:** FastqToSam now uses `--READ_GROUP_NAME ${meta.id}`, not `null`. With `null`, Picard 3.5 writes an `@RG` header line but tags no reads, and `MarkDuplicates` 3.5 crashes with a NullPointerException (Picard 2.27.4 in Snakemake tolerated it). Reads now carry `RG:Z:<sample>`. Consensus reads still get fgbio's default `RG:A`.
+- **Queryname sorts:** `PICARD_SORTSAM` runs twice. fgbio numbers consensus reads (`:1`, `:2`, … `:10`), but `MergeBamAlignment` needs Picard's lexicographic order, and fgbio >= 2 requires query-grouped input for `FilterConsensusReads`.
+- **FilterConsensusReads args:** `--max-no-call-fraction` is now `--max-no-calls` in fgbio 3.1.2 (the param keeps its name), and `--sort-order Coordinate` is set, since fgbio otherwise writes queryname order for a non-queryname input.
+- **MarkDuplicates:** only the metrics are published, not the duplicate-marked BAM (nothing downstream uses it).
+- **One MultiQC report** instead of two (decided in this plan); duplex metrics join it in session 3.
+- **Sandbox:** the sandbox login node exposes only 2 CPUs, so `conf/sandbox.config` (git-ignored) caps `process.resourceLimits` at 2 CPUs.
+
+**Open points for session 3**
+
+- FastQ Screen is untested (no databases in the test data). It needs `--fastq_screen_config` to point to a file named `fastq_screen.conf`, because the nf-core module hard-codes that name and stages its directory. The Snakemake `config/fastq_screen.conf` already has that name.
+- The nf-core `fgbio/filterconsensusreads` module hard-codes `--compression=0`, so the filtered BAM is uncompressed; consider a local override if sizes matter.
+- MultiQC sample names differ slightly between modules (Qualimap and Picard use the BAM name, samtools the prefix); a `sample_names` file could tidy this.
+- `MultiQC` does not get `software_versions.yml` yet (our file is not in MultiQC's custom-content format).
+- Still to do: `CALC_DUPLEX_METRICS`, `GET_READ_INFO`, variant calling, local-module `meta.yml`, nf-test, CI, Snakemake parity run. The target BED is ready for the duplex-metrics step.
