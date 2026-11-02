@@ -181,11 +181,11 @@
             "fa_icon": "fas fa-chart-bar",
             "description": "Quality control and duplex metrics.",
             "properties": {
-                "fastq_screen_config": {
+                "fastq_screen_db": {
                     "type": "string",
-                    "format": "file-path",
+                    "format": "directory-path",
                     "exists": true,
-                    "description": "FastQ Screen configuration file. FastQ Screen is skipped when unset."
+                    "description": "FastQ Screen database folder containing `fastq_screen.conf` and the index folders (the `FastQ_Screen_Genomes` layout made by `fastq_screen --get_genomes`). DATABASE paths in the conf should be relative to the folder name, or absolute and visible in the container. FastQ Screen is skipped when unset."
                 },
                 "run_qualimap": {
                     "type": "boolean",

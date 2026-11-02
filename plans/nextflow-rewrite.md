@@ -143,7 +143,7 @@ Differences that change outputs:
   - `markdup_max_records_in_ram=100000`
 - Renamed:
   - `ref` → `fasta`, with optional `fasta_fai`, `dict` and `bwa` for prebuilt indexes;
-  - `FastqScreen_config` → `fastq_screen_config` (FastQ Screen is skipped when unset).
+  - `FastqScreen_config` → `fastq_screen_db` (FastQ Screen is skipped when unset). It is a database **folder** (conf plus index folders), not a conf file, because the nf-core module stages and uses a whole folder.
 - Kept hard-coded, as in Snakemake, but set as `ext.args` in `modules.config` so they can be overridden:
   - GroupReadsByUmi `--strategy=paired --edits=1`
   - MergeBamAlignment `--SORT_ORDER coordinate --ALIGNER_PROPER_PAIR_FLAGS true --MAX_GAPS -1 --ORIENTATIONS FR` (the index comes from `samtools index`)
@@ -402,7 +402,7 @@ Checked against this repo and the login node the session runs on.
 
 - nf-core modules installed: `fgbio/groupreadsbyumi`, `fgbio/callduplexconsensusreads`, `fgbio/filterconsensusreads`, `picard/markduplicates`, `picard/sortsam`, `samtools/stats`, `samtools/flagstat`, `qualimap/bamqc`, `multiqc`, `gunzip` (the latter in the reference commit).
 - `CONSENSUS` subworkflow: GroupReadsByUmi (`paired`, `--edits 1 --min-map-q`) → CallDuplexConsensusReads → queryname sort → `BAM_ALIGN` (aliased `BAM_ALIGN_CONSENSUS`, `_consensus` prefixes) → queryname sort → FilterConsensusReads → `samtools index`.
-- `QC` subworkflow: FastQC, FastQ Screen (only when `--fastq_screen_config` is set), MarkDuplicates metrics, samtools stats/flagstat, optional Qualimap (`--run_qualimap`) on the mapped and the consensus BAM, and **one** MultiQC report. Consensus outputs carry a `_consensus` prefix so they are separate samples in MultiQC.
+- `QC` subworkflow: FastQC, FastQ Screen (only when `--fastq_screen_db` is set), MarkDuplicates metrics, samtools stats/flagstat, optional Qualimap (`--run_qualimap`) on the mapped and the consensus BAM, and **one** MultiQC report. Consensus outputs carry a `_consensus` prefix so they are separate samples in MultiQC.
 - Published layout: `mapped_bams/`, `grouped_by_umi/`, `consensus/`, `QC/{fastqc,fastqscreen,mark_duplicates,samtools,qualimap,consensus,multiqc}/`.
 
 **Verified** (apptainer, test profile, `--run_qualimap`): the full pipeline completes; the consensus BAM has 4,694 records (3,580 after filtering), is coordinate-sorted and indexed; MultiQC lists FastQC, Picard, samtools and Qualimap, with raw and consensus as separate samples. Stub runs (with and without `--run_qualimap`), lint and pre-commit pass.
@@ -418,8 +418,21 @@ Checked against this repo and the login node the session runs on.
 
 **Open points for session 3**
 
-- FastQ Screen is untested (no databases in the test data). It needs `--fastq_screen_config` to point to a file named `fastq_screen.conf`, because the nf-core module hard-codes that name and stages its directory. The Snakemake `config/fastq_screen.conf` already has that name.
+- ~~FastQ Screen is untested~~ **Done:** tested with a generated one-genome database (see "FastQ Screen test database" below).
 - The nf-core `fgbio/filterconsensusreads` module hard-codes `--compression=0`, so the filtered BAM is uncompressed; consider a local override if sizes matter.
 - MultiQC sample names differ slightly between modules (Qualimap and Picard use the BAM name, samtools the prefix); a `sample_names` file could tidy this.
 - `MultiQC` does not get `software_versions.yml` yet (our file is not in MultiQC's custom-content format).
 - Still to do: `CALC_DUPLEX_METRICS`, `GET_READ_INFO`, variant calling, local-module `meta.yml`, nf-test, CI, Snakemake parity run. The target BED is ready for the duplex-metrics step.
+
+### FastQ Screen test database
+
+`--fastq_screen_db` replaces `--fastq_screen_config`: it is a database **folder** (a `fastq_screen.conf` plus the index folders), as the nf-core `fastqscreen/fastqscreen` module stages and uses a whole folder. DATABASE paths in the conf should be relative to the folder name (the `FastQ_Screen_Genomes` layout from `fastq_screen --get_genomes`) or absolute and visible in the container. The index is never committed; `tests/scripts/build_fastq_screen_db.sh` builds one from the test reference. It needs only `bowtie2-build` on PATH (or `BOWTIE2_BUILD` set), so CI can provide bowtie2 however it likes, for example `bioconda::bowtie2=2.5.3` through `mamba-org/setup-micromamba`.
+
+```bash
+module load bowtie2/2.5.3   # or any bowtie2-build on PATH
+tests/scripts/build_fastq_screen_db.sh tests/data/GCA_002087985.1_ASM208798v1_genomic.fna.gz /vast/scratch/users/cmero.ma/fastq_screen_test_db
+nextflow run . -profile test,<engine> --outdir results \
+    --fastq_screen_db /vast/scratch/users/cmero.ma/fastq_screen_test_db/FastQ_Screen_Genomes
+```
+
+The index directory is outside the repo (the sandbox only keeps what is written to a mounted path, so `/vast/scratch/users/cmero.ma/fastq_screen_test_db` is a mount set up by the user; elsewhere under `/vast/scratch` writes are lost on reset). Verified (apptainer, test profile): the index built with the bowtie2 2.5.3 module (15 MB) is read by the container's bowtie2 (fastq-screen 0.16.0); R1 and R2 hit `ecoli_atcc10798` at 99.45% and 98.13% one-hit-one-genome, and MultiQC gets a FastQ Screen section. A folder without `fastq_screen.conf` and a nonexistent folder both fail with clear errors, and the pipeline runs unchanged without the parameter.

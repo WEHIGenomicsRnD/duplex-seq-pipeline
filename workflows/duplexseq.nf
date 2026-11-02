@@ -79,11 +79,11 @@ workflow DUPLEXSEQ {
         params.max_base_error_rate,
     )
 
-    // QC and a single MultiQC report; FastQ Screen only runs when a config is given
-    if (params.fastq_screen_config && file(params.fastq_screen_config).name != 'fastq_screen.conf') {
-        error("--fastq_screen_config must point to a file named 'fastq_screen.conf' (its directory is staged for FastQ Screen)")
+    // QC and a single MultiQC report; FastQ Screen only runs when a database folder is given
+    if (params.fastq_screen_db && !file("${params.fastq_screen_db}/fastq_screen.conf").exists()) {
+        error("--fastq_screen_db must be a folder containing 'fastq_screen.conf': ${params.fastq_screen_db}")
     }
-    ch_fastq_screen_db = params.fastq_screen_config ? channel.value(file(params.fastq_screen_config, checkIfExists: true).parent) : channel.empty()
+    ch_fastq_screen_db = params.fastq_screen_db ? channel.value(file(params.fastq_screen_db, checkIfExists: true, type: 'dir')) : channel.empty()
     ch_multiqc_config = params.multiqc_config ? file(params.multiqc_config, checkIfExists: true) : []
 
     QC(
