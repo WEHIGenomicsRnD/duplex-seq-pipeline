@@ -27,6 +27,7 @@ process CALC_DUPLEX_METRICS {
         --input_format bam \\
         --output ${prefix}_metrics.csv \\
         --ref_fasta ${fasta} \\
+        --sample ${meta.id} \\
         --cores ${task.cpus} \\
         ${target} \\
         ${args}

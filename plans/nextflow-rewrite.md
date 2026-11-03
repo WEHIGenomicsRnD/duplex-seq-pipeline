@@ -446,10 +446,15 @@ The index directory is outside the repo (the sandbox only keeps what is written 
 - `assets/multiqc_config.yml` (always used; `--multiqc_config` is applied on top): duplex section first, `table_sample_merge` for `_R1`/`_R2`/`_consensus`, `extra_fn_clean_exts: _mapped_merged`. Verified: raw and consensus rows merge under one sample (`NanoMB1Rep1`, `NanoMB1Rep1 Consensus`).
 - Real apptainer run: 29 processes succeed; the duplex metrics CSV has the plugin's `sample,metric,value` format (efficiency 0.0455, drop-out 0.329, on-target rate 0.869 with the test BED).
 
-**Open: resume testing here tomorrow**
+**Resolved (duplex-multiqc 0.1.1)**
 
-1. **The 0.1.0 container is broken for the plugin.** The `duplex_seq` module crashes with `ModuleNotFoundError: No module named 'matplotlib'`. The plugin declares `matplotlib`, but the image does not contain it, so it was built without the plugin's dependencies. MultiQC catches the error, exits 0 and writes a report **without the duplex section**, so the pipeline passes silently. Confirmed by running the same MultiQC inputs with matplotlib wheels added from a temp directory: the plugin then processes the CSV and writes the duplex plots (efficiency, drop-out rate, family sizes, GC, on-target). Needs a rebuilt image in the plugin repo (for example 0.1.1) with matplotlib installed; then bump the tag in `conf/modules.config` and `assets/multiqc_duplex_environment.yml`. Also consider a check that the report really contains the duplex section (nf-test assertion, or MultiQC `--strict`).
-2. **Duplex metrics sample name.** The plugin takes the sample name from the CSV column, which bypasses MultiQC's name cleaning, so the metrics currently show up as `NanoMB1Rep1_mapped_merged` (a separate row). Plan: pass `--sample ${meta.id}` to `calc-duplex-metrics` in the module (small deviation from the Snakemake CSV, which uses the BAM name) so the metrics merge into the `NanoMB1Rep1` row. Not applied yet.
-3. `CALC_DUPLEX_METRICS` has no conda route (the R package is not on conda); the container is the supported way to run it.
-4. `--output_read_info` (rinfo input, `GET_READ_INFO`) is still not implemented; the parameter is accepted and ignored.
-5. Still to do: variant calling (`nvc`, `varscan`, `filter_vcf`), local `meta.yml` files, nf-test, CI (including the FastQ Screen database build), README update, Snakemake parity run.
+- The 0.1.0 image lacked `matplotlib`, so the `duplex_seq` module crashed on import; MultiQC caught the error, exited 0 and wrote a report without the duplex section. Plugin release 0.1.1 fixes the dependency; `conf/modules.config` and `assets/multiqc_duplex_environment.yml` now use 0.1.1. Verified with a full apptainer run (29 processes): the plugin writes its 9 duplex plot files and the module runs without errors.
+- `CALC_DUPLEX_METRICS` now passes `--sample ${meta.id}`. The plugin takes the sample name from the CSV column, which bypasses MultiQC's name cleaning, so without it the metrics appeared as a separate `NanoMB1Rep1_mapped_merged` row. They now merge into the `NanoMB1Rep1` row (small deviation from the Snakemake CSV, which uses the BAM name).
+- `MULTIQC` runs with `--strict`, so a crashing module fails the task. Tested on the same inputs: with the broken 0.1.0 image, default MultiQC exits 0 with no duplex files, `--strict` exits 1; with 0.1.1 both pass and write 9 files.
+
+**Still open**
+
+1. `--strict` only catches crashes. It does not catch a wrong image without the plugin or a changed CSV format (MultiQC then just finds nothing). Two more guards are planned: a smoke test in the plugin repo's image build (run MultiQC on a small `sample,metric,value` CSV and assert `duplex_seq_*` files appear), and an nf-test assertion that `multiqc_data/duplex_seq_*.txt` exist. An optional runtime check on `MULTIQC.out.data` would also cover users who override the container.
+2. `CALC_DUPLEX_METRICS` has no conda route (the R package is not on conda); the container is the supported way to run it.
+3. `--output_read_info` (rinfo input, `GET_READ_INFO`) is still not implemented; the parameter is accepted and ignored.
+4. Still to do: variant calling (`nvc`, `varscan`, `filter_vcf`), local `meta.yml` files, nf-test, CI (including the FastQ Screen database build), README update, Snakemake parity run.
