@@ -246,31 +246,15 @@
             "fa_icon": "fas fa-bug",
             "description": "Duplex variant calling.",
             "properties": {
-                "variant_caller": {
-                    "type": "string",
-                    "default": "nvc",
-                    "enum": ["nvc", "varscan"],
-                    "description": "Variant caller: nvc (naive variant caller) or varscan."
-                },
-                "min_coverage": {
-                    "type": "integer",
-                    "default": 4,
-                    "description": "Minimum duplex coverage to call a variant."
-                },
                 "min_reads2": {
                     "type": "integer",
                     "default": 2,
                     "description": "Minimum supporting duplex reads to call a variant."
                 },
-                "min_vaf": {
-                    "type": "number",
-                    "default": 0.01,
-                    "description": "Minimum duplex VAF to call a variant."
-                },
                 "ploidy": {
                     "type": "integer",
                     "default": 1,
-                    "description": "Ploidy (only used with nvc)."
+                    "description": "Ploidy for the naive variant caller (nvc)."
                 }
             }
         },

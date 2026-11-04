@@ -88,8 +88,10 @@ def get_read_info(bam):
         mpos = max(r1.reference_start, r2.reference_start)
         epos = max(r1.reference_end, r2.reference_end)
 
-        print(f'{r1.query_name}\t{r1.reference_name}\t{pos}\t{mpos}\t{epos}\t{strand}\t{umi}',
-              file=sys.stdout)
+        print(
+            f'{r1.query_name}\t{r1.reference_name}\t{pos}\t{mpos}\t{epos}\t{strand}\t{umi}',
+            file=sys.stdout,
+        )
 
 
 def main():

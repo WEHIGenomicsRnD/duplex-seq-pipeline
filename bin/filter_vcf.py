@@ -1,72 +1,134 @@
 #!/usr/bin/env python3
 """
-Add DP field in the vcf file
+Post-process the VCF written by the naive variant caller (nvc).
+
+For every variant record this script:
+
+    * skips the record if its only ALT allele is "N" (there is no real variant),
+    * removes an "N" allele from a multi-allelic record, together with its values
+        in the per-allele AC and AF fields of the INFO column,
+    * adds the read depth (DP) to the INFO column and to the sample column.
+
+A FORMAT header line declaring DP is added to the header. The read depth is the sum
+of the per-nucleotide counts that nvc writes in the last field of the sample column;
+the deletion counts are not included. Only the first sample is annotated, as nvc
+writes a single sample.
 """
-#import numpy as np
-#import pandas as pd
-import sys
 
-sys.stderr = open(snakemake.log[0], "w")
+from argparse import ArgumentParser
 
-vcf_file = snakemake.input[0]
-outfile = snakemake.output[0]
+# 0-based indices of the VCF columns used below
+ALT_COLUMN = 4
+INFO_COLUMN = 7
+FORMAT_COLUMN = 8
+SAMPLE_COLUMN = 9
+
+# INFO fields with one value per ALT allele
+PER_ALLELE_INFO_KEYS = ("AC", "AF")
+
+DP_HEADER_LINE = '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">\n'
+
+
+def parse_args():
+    """Parse command line arguments."""
+    parser = ArgumentParser(
+        description="Add the read depth (DP) to an nvc VCF and drop N alleles."
+    )
+    parser.add_argument("input_vcf", metavar="INPUT_VCF", help="VCF written by nvc.")
+    parser.add_argument(
+        "output_vcf", metavar="OUTPUT_VCF", help="Filtered VCF with DP added."
+    )
+    return parser.parse_args()
+
+
+def sum_read_depth(sample_column):
+    """Sum the per-nucleotide read counts in a sample column.
+
+    nvc writes the counts in the last ":"-separated field of the sample column, as a
+    comma-separated list of "<label>=<count>" entries. Entries containing a "d"
+    (the deletion counts) are left out, as are empty and missing (".") entries.
+    """
+    count_entries = sample_column.split(":")[-1].split(",")
+
+    depth = 0
+    for entry in count_entries:
+        if "d" in entry or entry in ("", "."):
+            continue
+        depth += int(entry.split("=")[-1])
+    return depth
+
+
+def remove_n_alleles(fields):
+    """Remove "N" from a multi-allelic ALT column, in place.
+
+    The matching values are also removed from the per-allele INFO fields (AC and AF);
+    all other INFO fields are left as they are.
+    """
+    alt_alleles = fields[ALT_COLUMN].split(",")
+    if len(alt_alleles) < 2 or "N" not in alt_alleles:
+        return
+
+    # positions of the alleles that are kept
+    kept = [i for i, allele in enumerate(alt_alleles) if allele != "N"]
+    fields[ALT_COLUMN] = ",".join(alt_alleles[i] for i in kept)
+
+    info_fields = []
+    for info_field in fields[INFO_COLUMN].split(";"):
+        key, _, value = info_field.partition("=")
+        if key in PER_ALLELE_INFO_KEYS:
+            kept_values = [value.split(",")[i] for i in kept]
+            info_field = f"{key}={','.join(kept_values)}"
+        info_fields.append(info_field)
+    fields[INFO_COLUMN] = ";".join(info_fields)
+
+
+def add_read_depth(fields):
+    """Add the read depth (DP) to the INFO, FORMAT and sample columns, in place."""
+    depth = sum_read_depth(fields[SAMPLE_COLUMN])
+    fields[INFO_COLUMN] += f";DP={depth}"
+    fields[FORMAT_COLUMN] += ":DP"
+    fields[SAMPLE_COLUMN] += f":{depth}"
+
+
+def filter_vcf(input_vcf, output_vcf):
+    """Write a copy of the VCF with N alleles removed and DP added."""
+    dp_header_written = False
+
+    with open(input_vcf) as vcf_in, open(output_vcf, "w") as vcf_out:
+        for line_number, line in enumerate(vcf_in, start=1):
+            # Header lines are copied as they are. The DP declaration goes in front of
+            # the first FORMAT header line, or in front of the column header line if
+            # the VCF has no FORMAT header lines.
+            if line.startswith("#"):
+                is_format_or_column_header = line.startswith(("##FORMAT", "#CHROM"))
+                if not dp_header_written and is_format_or_column_header:
+                    vcf_out.write(DP_HEADER_LINE)
+                    dp_header_written = True
+                vcf_out.write(line)
+                continue
+
+            if not line.strip():
+                continue
+
+            fields = line.strip().split("\t")
+            if len(fields) <= SAMPLE_COLUMN:
+                raise ValueError(
+                    f"{input_vcf}, line {line_number}: expected at least "
+                    f"{SAMPLE_COLUMN + 1} tab-separated columns, got {len(fields)}"
+                )
+
+            # nothing is left of a record that only has N alleles
+            if set(fields[ALT_COLUMN].split(",")) == {"N"}:
+                continue
+
+            remove_n_alleles(fields)
+            add_read_depth(fields)
+            vcf_out.write("\t".join(fields) + "\n")
 
 
 def main():
-    ofile=open(outfile,'w')
-    flag=1
-    with open (vcf_file) as vcf:
-       for l in vcf.readlines():
-          if l.startswith("#"):
-              if flag and l.startswith("##FORMAT"):
-                  ofile.write('##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">' + '\n')
-                  flag=0
-              ofile.write(l)
-          else:
-              if l.strip().split("\t")[4] == "N": continue     ## Skipping rows with alt allele N
-              dp_res=count_depth(l)
-              ofile.write("\t".join(dp_res) + '\n')
-
-
-
-def count_depth(l):
-    line=l.strip().split("\t")
-
-    if "N" in line[4].strip().split(",") and len(line[4].split(",")) > 1:
-        line=process_allele(l)
-
-    nc=l.strip().split("\t")[-1].split(":")[-1].split(",")
-
-    dp=0
-    for row in nc:
-        if ("d" not in row) and (row != "") and (row != "."):
-            dp=int(row.split("=")[-1]) + dp
-    line[7]=line[7]+";DP="+str(dp)
-    line[9]=line[9]+":"+str(dp)
-    line[8]=line[8]+":"+"DP"
-
-    return line
-
-
-
-
-def process_allele(line):
-    row=line.strip().split("\t")
-    allele_base=row[4].strip().split(',')
-    afreq=row[7].strip().split(";")[-1].split("=")[-1].split(",")
-    ac=row[7].strip().split(";")[0].split("=")[-1].split(",")
-#    print(f"AC - {ac}")
-    for index, base in enumerate(allele_base):
-        if base =="N":
-           rm_base=allele_base.pop(index)
-           rm_freq=afreq.pop(index)
-           rm_ac=ac.pop(index)
-
-           new_afreq="AF="+",".join(afreq)
-           new_ac="AC="+",".join(ac)
-           row[7]=";".join([new_ac,new_afreq])
-           row[4]=",".join(allele_base)
-    return row
+    args = parse_args()
+    filter_vcf(args.input_vcf, args.output_vcf)
 
 
 if __name__ == "__main__":

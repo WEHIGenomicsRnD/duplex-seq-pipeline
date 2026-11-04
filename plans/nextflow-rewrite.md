@@ -47,10 +47,10 @@ subworkflows/local/
   bam_align/                    # SamToFastq -> bwa mem -> MergeBamAlignment -> samtools index (shared by fastq_align_umi and consensus)
   consensus/                    # GroupReadsByUmi -> CallDuplex -> realign (same align steps) -> FilterConsensusReads
   qc/                           # fastqc, fastq_screen, markdup, samtools stats/flagstat, [qualimap], calc_duplex_metrics, [read_info]
-  variant_calling/              # ClipBam -> nvc|varscan -> filter_vcf
+  variant_calling/              # ClipBam -> nvc -> filter_vcf
   utils_pipeline/               # lightweight init: validateParameters, paramsSummaryLog, samplesheetToList (nf-schema only)
 modules/nf-core/                # installed via `nf-core modules install` (tracked in modules.json)
-modules/local/                  # fgbio extractumis/correctumis/clipbam, get_read_info, calc_duplex_metrics, nvc, varscan, filter_vcf, picard samtofastq (if no nf-core)
+modules/local/                  # fgbio extractumis/correctumis/clipbam, get_read_info, calc_duplex_metrics, nvc, filter_vcf, picard samtofastq (if no nf-core)
 bin/                            # get_read_info.py, format_read_info.py, filter_vcf.py (synced from workflow/scripts at HEAD)
 conf/base.config, conf/modules.config, conf/test.config
 assets/schema_input.json, assets/multiqc_config.yml, assets/samplesheet.csv
@@ -103,7 +103,7 @@ Differences that change outputs:
 | Tool                                                                             | Container source                                                                                                                                                                                                                                                                                 |
 | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | fastqc, fastq-screen (+bowtie2), picard, fgbio, bwa+samtools, samtools, qualimap | nf-core modules (Seqera/biocontainers); pinned biocontainer tags if we keep the Snakemake versions                                                                                                                                                                                               |
-| varscan + samtools, nvc + samtools                                               | multi-tool: Seqera Containers built from the bioconda spec (nvc 0.0.4 is on bioconda)                                                                                                                                                                                                            |
+| nvc + samtools                                                                   | multi-tool: Seqera Containers built from the bioconda spec (nvc 0.0.4 is on bioconda)                                                                                                                                                                                                            |
 | python/pysam/pandas (`get_read_info.py`, `format_read_info.py`, `filter_vcf.py`) | Seqera Containers built from the conda spec                                                                                                                                                                                                                                                      |
 | calc-duplex-metrics                                                              | **exists**: `ghcr.io/wehigenomicsrnd/calculate-duplex-metrics:<release tag>` (build-docker.yml in that repo). Built on release. Latest is `0.2.0`; check that it includes BAM mode and 39fc6c9, otherwise cut `0.2.1`. `calc-duplex-metrics` is on PATH at `/usr/local/bin`. No runtime install. |
 | MultiQC + duplex-multiqc plugin                                                  | **needs building**: add a Dockerfile (`FROM` the Seqera multiqc 1.3x image, `pip install duplex-multiqc@<tag>`) and a GHCR build workflow in the duplex-multiqc repo. Conda profile: `multiqc` + pip install from git.                                                                           |
@@ -136,7 +136,7 @@ Differences that change outputs:
   - `min_mapq=20`, `min_input_baseq=30`, `error_rate_pre_umi=45`, `error_rate_post_umi=40`
   - `min_reads='4 2 2'`, `max_read_error_rate=0.05`, `max_base_error_rate=0.1`, `min_base_quality=50`, `max_no_call_fraction=0.05`
   - `duplex_metrics='all'`, `target_bed=null`, `output_read_info=false`, `run_qualimap=false`
-  - `variant_caller='nvc'`, `min_coverage=4`, `min_reads2=2`, `min_vaf=0.01`, `ploidy=1`
+  - `min_reads2=2`, `ploidy=1` (nvc only; varscan was dropped, so `variant_caller`, `min_coverage` and `min_vaf` are gone)
 - Resource-level values also become params:
   - `sort_mem='4G'`, `bam_chunk_size=2000000`
   - `read_info_buffer_size='110G'`
@@ -150,7 +150,6 @@ Differences that change outputs:
   - ClipBam `--clipping-mode=Hard --clip-overlapping-reads=true`
   - MarkDuplicates `BARCODE_TAG=RX`
   - nvc `--min_base_quality=0`
-  - varscan `--min-avg-qual 0 --strand-filter 0 --p-value 1`
 - `nextflow_schema.json` is generated with `nf-core pipelines schema build` as a one-off local tool; nf-core is not used in CI. Params are grouped by step, mirroring the fastquorum schema.
 
 ### 3. Samplesheet (`assets/schema_input.json`)
@@ -183,10 +182,9 @@ Differences that change outputs:
     - optional `--target_bed`;
     - Snakemake's `--metrics`, `--sort_mem`, `--cores ${task.cpus}` and `--bam_chunk_size` options;
     - no runtime `install_github`; the container comes from Q2.
-  - **`NVC`, `VARSCAN`, `FILTER_VCF`:**
-    - containers are Seqera images built from the bioconda specs (nvc, varscan + samtools, python);
+  - **`NVC`, `FILTER_VCF`:**
+    - containers are Seqera images built from the bioconda specs (nvc + samtools, python);
     - placeholder `mulled-v2-XXX` images removed;
-    - the varscan branch also gets `FILTER_VCF` applied or skipped consistently (fixes the Snakemake bug where `rule all` can't be satisfied).
 - **Picard input order:**
   - feed MergeBamAlignment a queryname/unsorted aligned BAM, not a coordinate-sorted one;
   - set `ext.prefix` so the unmapped and aligned BAMs don't share a filename in the consensus merge;
@@ -276,7 +274,7 @@ Differences that change outputs:
    - `*_metrics.csv` (should be identical)
    - filtered VCF records
    - read-info output with `--output_read_info`
-5. **Optional branches:** `--run_qualimap`, `--output_read_info`, `--umis`, `--target_bed`, `--variant_caller varscan`.
+5. **Optional branches:** `--run_qualimap`, `--output_read_info`, `--umis`, `--target_bed`.
 6. `nf-test test --profile docker` passes locally and in CI.
 
 ## Readiness check (before implementation)
@@ -465,4 +463,8 @@ The index directory is outside the repo (the sandbox only keeps what is written 
 1. **Plugin repo smoke test** (not in this repo): after building the duplex-multiqc image, run MultiQC on a small `sample,metric,value` CSV and assert `duplex_seq_*` files appear. Draft step for the build workflow: `docker run --rm -v "$PWD/smoke:/data" <image> multiqc --strict -o /data/out /data && ls /data/out/multiqc_data | grep -q '^duplex_seq'`.
 2. CI: install nf-test and run `nf-test test --profile test,docker`; build the FastQ Screen test database with `tests/scripts/build_fastq_screen_db.sh` (bowtie2 from bioconda) if FastQ Screen is to be covered.
 3. `CALC_DUPLEX_METRICS` has no conda route (the R package is not on conda); the container is the supported way to run it.
-4. Still to do: variant calling (`nvc`, `varscan`, `filter_vcf`; `filter_vcf.py` can reuse the python/pandas image if it has what it needs), local `meta.yml` files, README update, Snakemake parity run.
+4. Still to do: variant calling (`nvc` and `filter_vcf` only; varscan is dropped), local `meta.yml` files, README update, Snakemake parity run.
+
+**Decision: varscan is dropped from the Nextflow pipeline** (only nvc is implemented). The Snakemake pipeline is unchanged and still supports it. `variant_caller`, `min_coverage` and `min_vaf` were removed from `nextflow.config` and the schema, as only varscan used them; `min_reads2` and `ploidy` stay for nvc.
+
+**`bin/filter_vcf.py` rewritten** (readable names, comments, command line `filter_vcf.py INPUT_VCF OUTPUT_VCF` instead of the Snakemake globals, unused imports and dead code removed). Checked against the original on synthetic nvc-style VCFs covering every branch (plain SNV, only-N ALT, N in first/middle/last position of a multi-allelic ALT, empty and missing counts): identical output. Two deliberate differences, because no real nvc VCF was available to confirm the original's behaviour: (1) when an N allele is removed, other INFO fields (for example `AN`) are kept; the original rebuilt INFO as `AC=...;AF=...` and dropped everything else; (2) the DP header line is added before `#CHROM` if the VCF has no `##FORMAT` header lines (the original then omitted it). The editorconfig hook no longer excludes `bin/`; `get_read_info.py` got a whitespace-only wrap of one `print` call to pass it. No Python linter (ruff, flake8) is installed in the sandbox and installing one was not allowed, so the script is formatted by hand in black/ruff style and has not been run through ruff.
