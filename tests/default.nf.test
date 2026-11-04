@@ -1,0 +1,56 @@
+nextflow_pipeline {
+
+    name "Test the pipeline"
+    script "main.nf"
+
+    test("Test profile") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+
+        then {
+            assert workflow.success
+
+            // mapped and consensus BAMs
+            assert new File("$outputDir/mapped_bams/NanoMB1Rep1_mapped_merged.bam").exists()
+            assert new File("$outputDir/consensus/NanoMB1Rep1_consensus_mapped_merged_filtered.bam").exists()
+
+            // duplex metrics file in the format the duplex-multiqc plugin searches for
+            def metrics = new File("$outputDir/QC/duplex_metrics/NanoMB1Rep1_metrics.csv")
+            assert metrics.exists()
+            assert metrics.readLines()[0] == "sample,metric,value"
+
+            // the MultiQC report must contain the duplex section; MultiQC exits 0 without it when the
+            // plugin is missing or broken, so look for the plugin's own output files
+            def multiqc_data = new File("$outputDir/QC/multiqc/multiqc_data")
+            assert multiqc_data.exists()
+            assert multiqc_data.list().any { it.startsWith("duplex_seq") }
+        }
+    }
+
+    test("Test profile with the read info table") {
+
+        tag "read_info"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                output_read_info = true
+            }
+        }
+
+        then {
+            assert workflow.success
+
+            // the duplex metrics are computed from the read info table
+            assert new File("$outputDir/QC/read_info/NanoMB1Rep1.txt.gz").exists()
+            assert new File("$outputDir/QC/duplex_metrics/NanoMB1Rep1_metrics.csv").exists()
+
+            def multiqc_data = new File("$outputDir/QC/multiqc/multiqc_data")
+            assert multiqc_data.list().any { it.startsWith("duplex_seq") }
+        }
+    }
+}

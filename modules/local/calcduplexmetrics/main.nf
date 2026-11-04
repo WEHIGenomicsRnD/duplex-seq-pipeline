@@ -6,9 +6,11 @@ process CALC_DUPLEX_METRICS {
     container 'ghcr.io/wehigenomicsrnd/calculate-duplex-metrics:0.2.0'
 
     input:
-    tuple val(meta), path(bam)
+    tuple val(meta), path(input)
+    // mapped BAM, or the read info table from GET_READ_INFO
     tuple val(meta2), path(fasta)
     path target_bed
+    val input_format
 
     output:
     tuple val(meta), path("*_metrics.csv"), emit: csv
@@ -19,17 +21,19 @@ process CALC_DUPLEX_METRICS {
 
     script:
     def args = task.ext.args ?: ''
+    // ext.args2 (--sort_mem, --bam_chunk_size) and --cores only apply to BAM input, as in Snakemake
+    def args2 = input_format == 'bam' ? "--cores ${task.cpus} ${task.ext.args2 ?: ''}" : ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def target = target_bed ? "--target_bed ${target_bed}" : ''
     """
     calc-duplex-metrics \\
-        --input ${bam} \\
-        --input_format bam \\
+        --input ${input} \\
+        --input_format ${input_format} \\
         --output ${prefix}_metrics.csv \\
         --ref_fasta ${fasta} \\
         --sample ${meta.id} \\
-        --cores ${task.cpus} \\
         ${target} \\
+        ${args2} \\
         ${args}
     """
 

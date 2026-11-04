@@ -1,6 +1,6 @@
 //
-// QC: FastQC, FastQ Screen, MarkDuplicates metrics, samtools stats/flagstat, Qualimap and the duplex
-// metrics on the mapped and consensus BAMs, summarised in a single MultiQC report.
+// QC: FastQC, FastQ Screen, MarkDuplicates metrics, samtools stats/flagstat, Qualimap, the optional
+// read info table and the duplex metrics on the mapped and consensus BAMs, summarised in a single MultiQC report.
 // Consensus outputs get a `_consensus` prefix so they are separate samples in MultiQC.
 //
 
@@ -13,6 +13,7 @@ include { QUALIMAP_BAMQC } from '../../../modules/nf-core/qualimap/bamqc/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_CONSENSUS } from '../../../modules/nf-core/samtools/stats/main'
 include { SAMTOOLS_FLAGSTAT as SAMTOOLS_FLAGSTAT_CONSENSUS } from '../../../modules/nf-core/samtools/flagstat/main'
 include { QUALIMAP_BAMQC as QUALIMAP_BAMQC_CONSENSUS } from '../../../modules/nf-core/qualimap/bamqc/main'
+include { GET_READ_INFO } from '../../../modules/local/getreadinfo/main'
 include { CALC_DUPLEX_METRICS } from '../../../modules/local/calcduplexmetrics/main'
 include { MULTIQC } from '../../../modules/nf-core/multiqc/main'
 
@@ -25,6 +26,7 @@ workflow QC {
     target_bed // value: path(bed) or [] (enables the on-target duplex metrics)
     fastq_screen_db // channel: path(dir with fastq_screen.conf), or empty to skip FastQ Screen
     run_qualimap // value: boolean
+    output_read_info // value: boolean, write the read info table and compute the duplex metrics from it
     multiqc_config // value: path(config) or [path(config), path(config)...]
 
     main:
@@ -40,11 +42,22 @@ workflow QC {
     SAMTOOLS_STATS(bam_bai, fasta_fai)
     SAMTOOLS_FLAGSTAT(bam_bai)
 
-    // duplex metrics are computed from the mapped BAM (as in Snakemake), not the consensus BAM
+    // duplex metrics are computed from the mapped BAM (as in Snakemake), not the consensus BAM;
+    // with output_read_info the read info table is made first and used as the input instead
+    ch_mapped_bam = bam_bai.map { meta, bam, _bai -> [meta, bam] }
+    if (output_read_info) {
+        GET_READ_INFO(ch_mapped_bam)
+        ch_duplex_metrics_input = GET_READ_INFO.out.rinfo
+    }
+    else {
+        ch_duplex_metrics_input = ch_mapped_bam
+    }
+
     CALC_DUPLEX_METRICS(
-        bam_bai.map { meta, bam, _bai -> [meta, bam] },
+        ch_duplex_metrics_input,
         fasta_fai.map { meta, fasta, _fai -> [meta, fasta] },
         target_bed,
+        output_read_info ? 'rinfo' : 'bam',
     )
 
     // consensus BAM
@@ -75,6 +88,15 @@ workflow QC {
         .map { files -> [[id: 'multiqc'], files, multiqc_config, [], [], []] }
 
     MULTIQC(ch_multiqc_input)
+
+    // MultiQC exits 0 when it does not know about the duplex plugin (for example a container without
+    // duplex-multiqc), and --strict only catches a plugin that crashes. Either way the duplex section
+    // would silently be missing, so fail when the plugin wrote none of its files.
+    MULTIQC.out.data.subscribe { _meta, data_dir ->
+        if (!workflow.stubRun && !data_dir.listFiles().any { f -> f.name.startsWith('duplex_seq') }) {
+            error("The MultiQC report has no duplex section: the MULTIQC container must include the duplex-multiqc plugin (see conf/modules.config)")
+        }
+    }
 
     emit:
     report = MULTIQC.out.report // channel: [ val(meta), path(html) ]

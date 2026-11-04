@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Script for generating stats on duplex reads.
 Outputs each read's query name, reference it's

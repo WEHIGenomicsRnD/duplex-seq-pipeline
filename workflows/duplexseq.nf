@@ -98,6 +98,7 @@ workflow DUPLEXSEQ {
         ch_target_bed,
         ch_fastq_screen_db,
         params.run_qualimap,
+        params.output_read_info,
         ch_multiqc_config,
     )
 

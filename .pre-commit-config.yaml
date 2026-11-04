@@ -23,7 +23,8 @@ repos:
     hooks:
       - id: nextflow-lint
         args: ["-format"]
-        exclude: ^(modules/nf-core|subworkflows/nf-core)/
+        # nf-test.config uses nf-test's own config syntax, which nextflow lint cannot parse
+        exclude: ^(modules/nf-core|subworkflows/nf-core)/|^nf-test\.config$
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.33.0
     hooks:

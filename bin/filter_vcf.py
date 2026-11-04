@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Add DP field in the vcf file
 """

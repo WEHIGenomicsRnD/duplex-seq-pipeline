@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Reformats read info output to be similar to the Sanger
 NanoSeq pipeline (https://github.com/cancerit/NanoSeq)
