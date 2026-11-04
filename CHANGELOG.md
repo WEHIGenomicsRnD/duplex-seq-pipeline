@@ -128,6 +128,50 @@ metrics.
 of the form X-Y where X and Y are equal length UMIs" otherwise (a missing `RX` tag is not an error). Use
 `--markdup_duplex_umi false` for read structures with a single UMI, and to reproduce the per-strand marking of 0.1.0.
 
+#### Parity with 0.1.0
+
+Both pipelines were run on the 1 kb test window (sample `NanoMB1Rep1`): Snakemake 8.11.3 with its own conda environments
+and this branch with apptainer, with `--markdup_duplex_umi false` and with the default (set-up and comparison script in
+`tests/parity`). The Nextflow pipeline gives the same results in the early steps and differs from fgbio 3 onwards.
+
+**Identical:**
+
+- the aligned BAM, in all 86,593 records (position, MAPQ, CIGAR, mate fields, sequence, qualities and the UMI tags), so
+  bwa 0.7.17 and 0.7.19 align identically. Only the `RG` tag differs (deliberate, see above) and the `MQ` tag, which is
+  missing on the 21 supplementary records in 0.1.0 (not isolated; probably GATK 4.7 against Picard 2.27 MergeBamAlignment);
+- the FastQ Screen results, the FastQC basic statistics, the (empty) filtered VCF and 19 of the 20 duplex metrics (to
+  1e-9);
+- the Picard MarkDuplicates metrics per strand (35,443 pair duplicates, 155 unpaired, 0.82291) apart from the optical
+  duplicates.
+
+**Different, with the cause** (each tested by running the tools of both versions on the same input):
+
+- **UMI grouping (fgbio 1.4.0 against 3.1.2):** 85,572 records and 4,254 molecule families against 86,304 records and
+  4,359 families. fgbio 3 also groups the 366 templates (732 reads) that have an unmapped read (241) or mates on different
+  contigs (125); fgbio 1.4.0 drops them. All 4,254 families of 0.1.0 are unchanged.
+- **Consensus calling (fgbio 1.4.0 against 3.1.2):** 4,690 against 4,694 consensus reads. The new grouping adds 8; the
+  consensus caller itself gives a different sequence for about 16% of the reads (3,947 of 4,690 sequences are identical)
+  and different qualities for more, with the same mean base quality (87.8 against 87.9). Each pipeline's consensus was
+  reproduced exactly with the standalone fgbio (4,690 and 4,694 reads).
+- **Filtered consensus reads:** 3,380 against 3,580. `FilterConsensusReads` gives the same result in both versions on the
+  same input, so this follows from the consensus calls.
+- **nvc:** 801 against 761 sites (697 shared). Every site in both is an N-only call, so no variant is called and both
+  filtered VCFs are empty. The sites that differ are consensus bases that one version calls as N.
+- **Duplex metrics:** Snakemake has one more metric, `unpaired_families`. It installs `calculate-duplex-metrics` from the
+  repository at run time (commit `39fc6c9`), which has the metric; the `0.2.0` container does not.
+- **samtools stats:** 101 pairs that samtools 1.14 reports as outward oriented are inward oriented in 1.23 and later (the
+  same on either BAM); the duplicate counts differ because of the marked BAM (see above).
+- **Picard:** 388 against 390 optical duplicates, from Picard 2.27.4 against 3.5.0 (2.27.4 gives 388 on the Nextflow BAM
+  too). With the default `--markdup_duplex_umi` the duplicate figures differ further, as described above.
+- **Qualimap:** the duplication lines (flagged against estimated), two extra lines for overlapping read pairs (the nf-core
+  module runs Qualimap with `--collect-overlap-pairs`), and for the consensus BAM the consequences of the consensus
+  differences.
+
+Decision: fgbio 3.1.2 is kept (as in the nf-core modules), to take improvements where they come. The consensus, and with
+it the filtered BAM and the nvc calls, therefore do not match 0.1.0 exactly; exact parity would need fgbio 1.4.0 in the
+local and nf-core fgbio modules. The duplex metrics will gain `unpaired_families` with `calculate-duplex-metrics` 0.2.1
+(see the plan).
+
 ## [0.1.0]
 
 The Snakemake pipeline (tag `0.1.0`, commit `d71e733`): FASTQ files to UMI-extracted and aligned BAM, duplex consensus
