@@ -268,9 +268,9 @@ def time_to_minutes(time):
 
     According to slurm:
 
-      Acceptable time formats include "minutes", "minutes:seconds",
-      "hours:minutes:seconds", "days-hours", "days-hours:minutes"
-      and "days-hours:minutes:seconds".
+        Acceptable time formats include "minutes", "minutes:seconds",
+        "hours:minutes:seconds", "days-hours", "days-hours:minutes"
+        and "days-hours:minutes:seconds".
 
     """
     if not isinstance(time, str):

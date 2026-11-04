@@ -14,6 +14,11 @@ indent_size = 2
 [*.{py,smk}]
 indent_size = 4
 
+# prettier aligns content nested under numbered list items ("1. ") with 3 spaces, which
+# cannot be a multiple of the indent size, so the indent size is not checked for markdown
+[*.md]
+indent_size = unset
+
 # These files are edited and tested upstream in nf-core/modules
 [/modules/nf-core/**]
 charset = unset

@@ -17,7 +17,7 @@ run_qualimap: false
 output_read_info: false
 
 # reference genome fasta
-ref: 'ref/Ecoli_strain_BL21_genome.fasta' 
+ref: 'ref/Ecoli_strain_BL21_genome.fasta'
 
 # metrics to calculate with calc-duplex-metrics
 # comma-separated list of individual metrics and/or groups
