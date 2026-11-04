@@ -223,6 +223,11 @@
                     "default": 100000,
                     "description": "Picard MarkDuplicates MAX_RECORDS_IN_RAM."
                 },
+                "markdup_duplex_umi": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Mark duplicates per duplex molecule: MarkDuplicates treats the UMIs A-B and B-A (the two strands of a molecule) as the same (--DUPLEX_UMI). Needs every RX tag to be two equal-length UMIs joined by a hyphen, so turn it off for single-UMI read structures, or to reproduce the per-strand duplicate marking of the Snakemake pipeline."
+                },
                 "sort_mem": {
                     "type": "string",
                     "default": "4G",

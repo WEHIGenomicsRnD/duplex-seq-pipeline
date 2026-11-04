@@ -37,10 +37,15 @@ workflow QC {
     FASTQC(reads)
     FASTQSCREEN(reads, fastq_screen_db)
 
-    // mapped BAM
+    // mapped BAM. The statistics tools read the duplicate-marked BAM, so the duplicate counts
+    // in samtools stats/flagstat and Qualimap are the UMI-aware ones from MarkDuplicates (on the
+    // unmarked BAM samtools reports 0 and Qualimap its own UMI-blind estimate). Nothing else
+    // changes with the flags, but only QC uses the marked BAM: consensus calling and the duplex
+    // metrics keep the unmarked BAM, so no tool that honours the flag can drop UMI family members.
     PICARD_MARKDUPLICATES(bam_bai.map { meta, bam, _bai -> [meta, bam] }, fasta_fai)
-    SAMTOOLS_STATS(bam_bai, fasta_fai)
-    SAMTOOLS_FLAGSTAT(bam_bai)
+    ch_marked_bam = PICARD_MARKDUPLICATES.out.bam
+    SAMTOOLS_STATS(ch_marked_bam.map { meta, bam -> [meta, bam, []] }, fasta_fai)
+    SAMTOOLS_FLAGSTAT(ch_marked_bam.map { meta, bam -> [meta, bam, []] })
 
     // duplex metrics are computed from the mapped BAM (as in Snakemake), not the consensus BAM;
     // with output_read_info the read info table is made first and used as the input instead
@@ -76,7 +81,7 @@ workflow QC {
 
     // Qualimap is resource-intensive, so it is opt-in (--run_qualimap)
     if (run_qualimap) {
-        QUALIMAP_BAMQC(bam_bai.map { meta, bam, _bai -> [meta, bam] }, [])
+        QUALIMAP_BAMQC(ch_marked_bam, [])
         QUALIMAP_BAMQC_CONSENSUS(consensus_bam_bai.map { meta, bam, _bai -> [meta, bam] }, [])
         ch_multiqc_files = ch_multiqc_files
             .mix(QUALIMAP_BAMQC.out.results.map { _meta, f -> f })

@@ -28,6 +28,22 @@ nextflow_pipeline {
             assert filtered_vcf.exists()
             assert filtered_vcf.readLines().any { it.startsWith("##FORMAT=<ID=DP,") }
 
+            // samtools flagstat reads the duplicate-marked BAM, so its duplicate count is Picard's
+            def flagstat = new File("$outputDir/QC/samtools/flagstat/NanoMB1Rep1.flagstat").readLines()
+            def flagstat_duplicates = flagstat.find { it.endsWith("primary duplicates") }.split(" ")[0] as int
+            def markdup_file = new File("$outputDir/QC/mark_duplicates/NanoMB1Rep1_mapped_merged_markdup.metrics.txt")
+            def markdup = markdup_file
+                .readLines()
+                .findAll { it.trim() && !it.startsWith("#") }
+            def markdup_fields = markdup[0].split("\t").toList()
+            def markdup_values = markdup[1].split("\t")
+            def picard_duplicates = 2 * (markdup_values[markdup_fields.indexOf("READ_PAIR_DUPLICATES")] as double) +
+                (markdup_values[markdup_fields.indexOf("UNPAIRED_READ_DUPLICATES")] as double)
+            assert flagstat_duplicates > 0
+            assert flagstat_duplicates == picard_duplicates
+            // duplicates are marked per duplex molecule by default
+            assert markdup_file.readLines().find { it.startsWith("# MarkDuplicates") }.contains("--DUPLEX_UMI true")
+
             // duplex metrics file in the format the duplex-multiqc plugin searches for
             def metrics = new File("$outputDir/QC/duplex_metrics/NanoMB1Rep1_metrics.csv")
             assert metrics.exists()
@@ -61,6 +77,26 @@ nextflow_pipeline {
 
             def multiqc_data = new File("$outputDir/QC/multiqc/multiqc_data")
             assert multiqc_data.list().any { it.startsWith("duplex_seq") }
+        }
+    }
+
+    test("Test profile with per-strand duplicate marking") {
+
+        tag "legacy"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                markdup_duplex_umi = false
+            }
+        }
+
+        then {
+            assert workflow.success
+
+            // without --DUPLEX_UMI the two strands of a molecule are different molecules, as in Snakemake
+            def markdup_file = new File("$outputDir/QC/mark_duplicates/NanoMB1Rep1_mapped_merged_markdup.metrics.txt")
+            assert markdup_file.readLines().find { it.startsWith("# MarkDuplicates") }.contains("--DUPLEX_UMI false")
         }
     }
 }

@@ -488,3 +488,9 @@ The index directory is outside the repo (the sandbox only keeps what is written 
 **Verification:** `nf-test` passes both tests (default run with the variant-calling assertions, and the `--output_read_info` run) with apptainer. In the Claude sandbox, tasks are killed (exit 137) above its 8 GB Slurm memory limit; that, not the code, made the read-info test fail once, and capping task memory in `conf/sandbox.config` fixed it.
 
 The Claude sandbox job now has a 16 GB memory limit (it was 8 GB earlier in the session); `conf/sandbox.config` caps tasks at 12 GB and the executor at 14 GB.
+
+## QC: duplicate-marked BAM and duplex UMIs
+
+- `SAMTOOLS_STATS`, `SAMTOOLS_FLAGSTAT` and `QUALIMAP_BAMQC` (mapped sample) now read the BAM written by `PICARD_MARKDUPLICATES` (no index needed); the consensus statistics, the duplex metrics and the consensus path keep the unmarked BAM. The nf-test checks that the flagstat duplicate count equals Picard's. Analysis, numbers and consequences are in `CHANGELOG.md`.
+- `--markdup_duplex_umi` (default true) passes `--DUPLEX_UMI true` to MarkDuplicates, so duplicates are marked per duplex molecule (unique pairs 5,296 against 7,600 per strand, close to the 5,565 molecule-level families of `calc-duplex-metrics`). Picard stops if an `RX` tag is not two equal-length UMIs joined by a hyphen, so single-UMI read structures need `--markdup_duplex_umi false`, which also reproduces the Snakemake (per-strand) marking. Three nf-test tests cover the default, the read info table and the switch.
+- `CHANGELOG.md` is new: 0.1.0 is the Snakemake pipeline (tag `0.1.0`), 0.2.0 the unreleased Nextflow rewrite (`manifest.version` is `0.2.0dev`).
