@@ -9,6 +9,7 @@ include { PREPARE_REFERENCE } from '../subworkflows/local/prepare_reference/main
 include { FASTQ_ALIGN_UMI } from '../subworkflows/local/fastq_align_umi/main'
 include { CONSENSUS } from '../subworkflows/local/consensus/main'
 include { QC } from '../subworkflows/local/qc/main'
+include { VARIANT_CALLING } from '../subworkflows/local/variant_calling/main'
 include { softwareVersionsToYAML } from '../subworkflows/local/utils_pipeline/main'
 
 /*
@@ -79,6 +80,13 @@ workflow DUPLEXSEQ {
         params.max_base_error_rate,
     )
 
+    // variant calling on the filtered consensus reads
+    VARIANT_CALLING(
+        CONSENSUS.out.filtered_bam_bai.map { meta, bam, _bai -> [meta, bam] },
+        ch_fasta_fai,
+        ch_fasta_fai_dict,
+    )
+
     // QC and a single MultiQC report; FastQ Screen only runs when a database folder is given
     if (params.fastq_screen_db && !file("${params.fastq_screen_db}/fastq_screen.conf").exists()) {
         error("--fastq_screen_db must be a folder containing 'fastq_screen.conf': ${params.fastq_screen_db}")
@@ -108,6 +116,7 @@ workflow DUPLEXSEQ {
     emit:
     bam = FASTQ_ALIGN_UMI.out.bam // channel: [ val(meta), path(bam) ]
     consensus_bam = CONSENSUS.out.filtered_bam_bai // channel: [ val(meta), path(bam), path(bai) ]
+    vcf = VARIANT_CALLING.out.filtered_vcf // channel: [ val(meta), path(vcf) ]
     multiqc_report = QC.out.report // channel: [ val(meta), path(html) ]
     versions = ch_versions // channel: path(software_versions.yml)
 }

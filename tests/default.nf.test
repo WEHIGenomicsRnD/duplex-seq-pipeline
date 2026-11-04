@@ -18,6 +18,16 @@ nextflow_pipeline {
             assert new File("$outputDir/mapped_bams/NanoMB1Rep1_mapped_merged.bam").exists()
             assert new File("$outputDir/consensus/NanoMB1Rep1_consensus_mapped_merged_filtered.bam").exists()
 
+            // variant calling: the clipped consensus BAM, the nvc VCF and the filtered VCF; the test
+            // data has no real variants, so the filtered VCF only has its header
+            assert new File("$outputDir/consensus/NanoMB1Rep1_consensus_mapped_merged_filtered_clipped.bam").exists()
+            def vcf = new File("$outputDir/variants/NanoMB1Rep1.vcf")
+            assert vcf.exists()
+            assert vcf.readLines().any { it.startsWith("##source=Naive Variant Caller") }
+            def filtered_vcf = new File("$outputDir/variants/NanoMB1Rep1_filtered.vcf")
+            assert filtered_vcf.exists()
+            assert filtered_vcf.readLines().any { it.startsWith("##FORMAT=<ID=DP,") }
+
             // duplex metrics file in the format the duplex-multiqc plugin searches for
             def metrics = new File("$outputDir/QC/duplex_metrics/NanoMB1Rep1_metrics.csv")
             assert metrics.exists()

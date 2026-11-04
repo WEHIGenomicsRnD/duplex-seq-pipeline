@@ -463,8 +463,28 @@ The index directory is outside the repo (the sandbox only keeps what is written 
 1. **Plugin repo smoke test** (not in this repo): after building the duplex-multiqc image, run MultiQC on a small `sample,metric,value` CSV and assert `duplex_seq_*` files appear. Draft step for the build workflow: `docker run --rm -v "$PWD/smoke:/data" <image> multiqc --strict -o /data/out /data && ls /data/out/multiqc_data | grep -q '^duplex_seq'`.
 2. CI: install nf-test and run `nf-test test --profile test,docker`; build the FastQ Screen test database with `tests/scripts/build_fastq_screen_db.sh` (bowtie2 from bioconda) if FastQ Screen is to be covered.
 3. `CALC_DUPLEX_METRICS` has no conda route (the R package is not on conda); the container is the supported way to run it.
-4. Still to do: variant calling (`nvc` and `filter_vcf` only; varscan is dropped), local `meta.yml` files, README update, Snakemake parity run.
+4. Still to do: local `meta.yml` files, README update, Snakemake parity run.
 
 **Decision: varscan is dropped from the Nextflow pipeline** (only nvc is implemented). The Snakemake pipeline is unchanged and still supports it. `variant_caller`, `min_coverage` and `min_vaf` were removed from `nextflow.config` and the schema, as only varscan used them; `min_reads2` and `ploidy` stay for nvc.
 
 **`bin/filter_vcf.py` rewritten** (readable names, comments, command line `filter_vcf.py INPUT_VCF OUTPUT_VCF` instead of the Snakemake globals, unused imports and dead code removed). Checked against the original on synthetic nvc-style VCFs covering every branch (plain SNV, only-N ALT, N in first/middle/last position of a multi-allelic ALT, empty and missing counts): identical output. Two deliberate differences, because no real nvc VCF was available to confirm the original's behaviour: (1) when an N allele is removed, other INFO fields (for example `AN`) are kept; the original rebuilt INFO as `AC=...;AF=...` and dropped everything else; (2) the DP header line is added before `#CHROM` if the VCF has no `##FORMAT` header lines (the original then omitted it). The editorconfig hook no longer excludes `bin/`; `get_read_info.py` got a whitespace-only wrap of one `print` call to pass it. No Python linter (ruff, flake8) is installed in the sandbox and installing one was not allowed, so the script is formatted by hand in black/ruff style and has not been run through ruff.
+
+## Variant calling (not yet committed)
+
+**Done**
+
+- `VARIANT_CALLING` subworkflow: queryname sort (`PICARD_SORTSAM_FILTERED`) → `FGBIO_CLIPBAM` (`--clipping-mode Hard --clip-overlapping-reads true --sort-order Coordinate`) → `samtools index` → `NVC` → `FILTER_VCF`. Outputs: `consensus/*_filtered_clipped.bam(.bai)`, `variants/<sample>.vcf` and `variants/<sample>_filtered.vcf`.
+- Local modules `FGBIO_CLIPBAM` (fgbio 3.1.2, same image as the other fgbio modules), `NVC` (nvc 0.0.4) and `FILTER_VCF` (runs `bin/filter_vcf.py`; reuses the python image of `GET_READ_INFO`, since the script needs only the standard library). nvc options (`--variants_only --ploidy --min_support_depth --min_mapping_quality --min_base_quality=0`) are set in `conf/modules.config`; resources follow the Snakemake `cluster.yaml` (NVC 1 CPU, 32 GB).
+- The extra queryname sort is needed because fgbio >= 2 `ClipBam` requires queryname-sorted or query-grouped input, like `FilterConsensusReads`.
+- Verified with apptainer on the test data: the clipped BAM has the 3,580 filtered consensus reads, coordinate sorted; nvc writes 761 records; `software_versions.yml` gets `nvc: 0.0.4` (nvc 0.0.4 is Python 2: the image has `python` but no `python3`, so the version comes from `naive_variant_caller.py --version`).
+- The test data has no real variants (same strain as the reference): all 761 nvc records have ALT `N` only, so the filtered VCF has only its header. The nf-test checks the header, the nvc source line and the DP declaration.
+- `filter_vcf.py` check on real nvc output: the rewritten script and the original give identical output on the actual nvc VCF and on records in nvc's real format (INFO is only `AC;AF`; FORMAT is `GT:AC:AF:NC`; the count list ends with a trailing comma), including multi-allelic records with an N allele. One behaviour of the original was kept: after an N allele is removed, the per-sample `AC`/`AF` sub-fields in the sample column still contain the N allele's values (only ALT and INFO are updated).
+
+**Open**
+
+1. ~~`NVC` container~~ **Done:** `community.wave.seqera.io/library/nvc:0.0.4--cd3232ac269fda45` (built on Seqera Containers by the user from `modules/local/nvc/environment.yml`); nf-test passes with it under apptainer.
+2. A variant-calling test with real variants (the test data has none, so the multi-allelic and DP paths only run on synthetic records).
+
+**Verification:** `nf-test` passes both tests (default run with the variant-calling assertions, and the `--output_read_info` run) with apptainer. In the Claude sandbox, tasks are killed (exit 137) above its 8 GB Slurm memory limit; that, not the code, made the read-info test fail once, and capping task memory in `conf/sandbox.config` fixed it.
+
+The Claude sandbox job now has a 16 GB memory limit (it was 8 GB earlier in the session); `conf/sandbox.config` caps tasks at 12 GB and the executor at 14 GB.
