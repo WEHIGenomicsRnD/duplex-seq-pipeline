@@ -463,7 +463,7 @@ The index directory is outside the repo (the sandbox only keeps what is written 
 1. **Plugin repo smoke test** (not in this repo): after building the duplex-multiqc image, run MultiQC on a small `sample,metric,value` CSV and assert `duplex_seq_*` files appear. Draft step for the build workflow: `docker run --rm -v "$PWD/smoke:/data" <image> multiqc --strict -o /data/out /data && ls /data/out/multiqc_data | grep -q '^duplex_seq'`.
 2. CI: install nf-test and run `nf-test test --profile test,docker`; build the FastQ Screen test database with `tests/scripts/build_fastq_screen_db.sh` (bowtie2 from bioconda) if FastQ Screen is to be covered.
 3. `CALC_DUPLEX_METRICS` has no conda route (the R package is not on conda); the container is the supported way to run it.
-4. Still to do: local `meta.yml` files, README update, Snakemake parity run.
+4. Done since: `meta.yml` for the seven local modules (validated against the nf-core module meta schema; authors and maintainers are `@mcmero`) and the README (the Nextflow section, outputs, parameters). Still to do: CI (nf-test, the FastQ Screen database build), `meta.yml` for the local subworkflows (optional), a variant-calling test with real variants.
 
 **Decision: varscan is dropped from the Nextflow pipeline** (only nvc is implemented). The Snakemake pipeline is unchanged and still supports it. `variant_caller`, `min_coverage` and `min_vaf` were removed from `nextflow.config` and the schema, as only varscan used them; `min_reads2` and `ploidy` stay for nvc.
 

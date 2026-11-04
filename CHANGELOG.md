@@ -38,6 +38,7 @@ agree. The rewrite plan is in [`plans/nextflow-rewrite.md`](plans/nextflow-rewri
   BED), the `test` profile and nf-test tests (`nf-test.config`, `tests/default.nf.test`).
 - `--markdup_duplex_umi` (on by default): MarkDuplicates marks duplicates per duplex molecule (`--DUPLEX_UMI true`); turn it
   off for single-UMI read structures or to reproduce the per-strand marking of 0.1.0.
+- `meta.yml` for the local modules, in the nf-core format (checked against the nf-core module meta schema).
 - Tooling: pre-commit hooks (prettier, editorconfig-checker, `nextflow lint`, schema check) and a lint workflow.
 
 ### Changed

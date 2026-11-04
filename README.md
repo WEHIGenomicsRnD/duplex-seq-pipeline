@@ -9,28 +9,90 @@ identifiers](https://plone.bcgsc.ca/services/solseq/duplex-umi-documents/idt_ana
 
 ## Nextflow version (in development)
 
-A Nextflow rewrite of this pipeline is in progress (see `plans/nextflow-rewrite.md`).
-Snakemake remains the reference implementation until the two are shown to agree.
-So far the Nextflow pipeline covers reference preparation and FASTQ to
-UMI-extracted, aligned BAM.
+A Nextflow rewrite of the pipeline (release 0.2.0, not released yet) runs the same analysis with containers or conda. The
+[Snakemake version](#snakemake-version) (release 0.1.0, described further down) remains the reference implementation.
+On the test data both give the same alignments, and the remaining differences were traced to tool versions, mainly fgbio 3
+against fgbio 1.4.0: see [`tests/parity`](tests/parity/README.md) and the [changelog](CHANGELOG.md).
+
+### What it does
+
+1. **Reference:** a samtools index, a sequence dictionary and a bwa index are built unless you supply them. A gzipped FASTA is
+   decompressed first.
+2. **UMIs and alignment:** the FASTQ files become an unmapped BAM, the UMIs are extracted with fgbio (`--read_structure`) and
+   optionally corrected against a list of known UMIs (`--umis`), and the reads are aligned with bwa mem and merged back.
+3. **Duplex consensus:** reads are grouped by UMI, duplex consensus reads are called, realigned and filtered (fgbio).
+4. **Variants:** overlapping read pairs of the filtered consensus reads are clipped (fgbio ClipBam), variants are called with
+   the naive variant caller (nvc) and the VCF is filtered.
+5. **QC:** FastQC, FastQ Screen (when a database is given), Picard MarkDuplicates (per duplex molecule), samtools stats and
+   flagstat, Qualimap (`--run_qualimap`) and the duplex metrics of
+   [calc-duplex-metrics](https://github.com/WEHIGenomicsRnD/calculate-duplex-metrics), all in a single MultiQC report that
+   includes the duplex metrics (via the [duplex-multiqc](https://github.com/WEHIGenomicsRnD/duplex-multiqc) plugin).
+
+### Running
 
 ```bash
+# check the installation on the small test data set
 nextflow run . -profile test,docker --outdir results
+
+# run on your data
 nextflow run . -profile docker --input samplesheet.csv --fasta genome.fasta --outdir results
 ```
 
+You need Nextflow 25.04 or later and a container engine: use the profile `docker`, `singularity` or `apptainer` (`wave`
+builds containers on demand). The `conda` and `mamba` profiles cannot run the duplex metrics, because
+calc-duplex-metrics is not on conda and only comes as a container
+(`ghcr.io/wehigenomicsrnd/calculate-duplex-metrics`). Run `nextflow run . --help` for all parameters.
+
 The samplesheet is a CSV with columns `sample,fastq_1,fastq_2` and the optional
 columns `read_structure` and `umi_file`, which override `--read_structure` and
-`--umis` for that sample:
+`--umis` for that sample. Relative paths are resolved against the folder of the samplesheet:
 
 ```csv
 sample,fastq_1,fastq_2
 NanoMB1Rep1,NanoMB1Rep1_R1.fastq.gz,NanoMB1Rep1_R2.fastq.gz
 ```
 
-Parameters keep the names and defaults of `config/config.yaml`, except `ref` is
-now `--fasta`. Missing reference indexes (`--fasta_fai`, `--dict`, `--bwa`) are
-built. Run `nextflow run . --help` for the full list.
+The main parameters (all in `nextflow_schema.json`):
+
+| Parameter                             | Default             | Description                                                                                                                                                                                                                             |
+| ------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--input`, `--outdir`                 |                     | The samplesheet and the output directory (`results`).                                                                                                                                                                                   |
+| `--fasta`                             |                     | Reference genome FASTA (may be gzipped). `--fasta_fai`, `--dict` and `--bwa` take indexes that already exist.                                                                                                                           |
+| `--read_structure`                    | `3M2S146T 3M2S146T` | fgbio read structure of the two reads.                                                                                                                                                                                                  |
+| `--umis`                              |                     | Text file of known UMIs (one per line); UMIs are corrected against it. Without it no correction is done.                                                                                                                                |
+| `--target_bed`                        |                     | BED file of target regions; adds the on-target rates to the duplex metrics.                                                                                                                                                             |
+| `--fastq_screen_db`                   |                     | FastQ Screen database folder: the `FastQ_Screen_Genomes` layout of `fastq_screen --get_genomes`, with a `fastq_screen.conf`. FastQ Screen is skipped without it. `tests/scripts/build_fastq_screen_db.sh` builds a small one for tests. |
+| `--run_qualimap`                      | `false`             | Run Qualimap (resource-intensive).                                                                                                                                                                                                      |
+| `--output_read_info`                  | `false`             | Write the read info table (`QC/read_info`) and compute the duplex metrics from it instead of from the BAM.                                                                                                                              |
+| `--markdup_duplex_umi`                | `true`              | Mark duplicates per duplex molecule (the UMIs `A-B` and `B-A` of the two strands count as one). Turn it off for single-UMI read structures, or to mark per strand as release 0.1.0 does.                                                |
+| `--multiqc_config`, `--multiqc_title` |                     | A MultiQC config that is applied on top of the packaged one, and a report title.                                                                                                                                                        |
+
+The consensus calling and filtering options (`--min_reads`, `--min_base_quality`, ...) and the variant calling options
+(`--min_reads2`, `--ploidy`) keep the names and defaults of `config/config.yaml`; `ref` is now `--fasta`, and
+`FastqScreen_config` is now `--fastq_screen_db`. varscan is not implemented, only nvc.
+
+### Outputs
+
+| Directory         | Content                                                                                                                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `reference/`      | The indexes that were built (`.fai`, `.dict`, `bwa/`).                                                                                                                                |
+| `mapped_bams/`    | `<sample>_mapped_merged.bam`: the aligned BAM with the UMI tags.                                                                                                                      |
+| `grouped_by_umi/` | The BAM grouped by UMI and the family size histogram.                                                                                                                                 |
+| `consensus/`      | The duplex consensus reads: unmapped, mapped, filtered (`_filtered.bam`) and clipped for variant calling (`_filtered_clipped.bam`).                                                   |
+| `variants/`       | `<sample>.vcf` from nvc and `<sample>_filtered.vcf`.                                                                                                                                  |
+| `QC/`             | FastQC, FastQ Screen, MarkDuplicates metrics, samtools, Qualimap, `duplex_metrics/` and, with `--output_read_info`, `read_info/`. The consensus reads have their own `QC/consensus/`. |
+| `QC/multiqc/`     | The MultiQC report (`multiqc_report.html`).                                                                                                                                           |
+| `pipeline_info/`  | Tool versions (`software_versions.yml`), the execution report, timeline, trace and DAG.                                                                                               |
+
+### Development
+
+The tests use [nf-test](https://www.nf-test.com): `nf-test test --profile test,docker`. The linters (prettier, editorconfig,
+`nextflow lint`) run as [pre-commit](https://pre-commit.com) hooks. `plans/nextflow-rewrite.md` is the plan of the rewrite and
+`CHANGELOG.md` lists the changes with respect to the Snakemake version.
+
+## Snakemake version
+
+The rest of this document describes the Snakemake pipeline (release 0.1.0).
 
 ## Prerequisites
 

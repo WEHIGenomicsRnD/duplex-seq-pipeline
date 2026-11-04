@@ -1,0 +1,66 @@
+name: filtervcf
+description: |
+  Post-processes the VCF written by nvc with `bin/filter_vcf.py`: records whose only ALT allele is N are dropped, an N
+  allele is removed from multi-allelic records together with its AC and AF values, and the read depth (DP) is added to
+  the INFO and sample columns (with a FORMAT header line).
+keywords:
+  - vcf
+  - filter
+  - read depth
+  - nvc
+tools:
+  - filter_vcf.py:
+      description: Script of this pipeline (bin/filter_vcf.py) that filters an nvc VCF and adds the read depth
+      tool_dev_url: https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline/blob/main/bin/filter_vcf.py
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - vcf:
+        type: file
+        description: VCF file written by nvc
+        pattern: "*.vcf"
+        ontologies:
+          - edam: "http://edamontology.org/format_3016"
+output:
+  vcf:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*_filtered.vcf":
+          type: file
+          description: Filtered VCF file with DP added
+          pattern: "*_filtered.vcf"
+          ontologies:
+            - edam: "http://edamontology.org/format_3016"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - 'python3 --version | sed "s/Python //"':
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - 'python3 --version | sed "s/Python //"':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mcmero"
+maintainers:
+  - "@mcmero"
