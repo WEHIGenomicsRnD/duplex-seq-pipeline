@@ -99,4 +99,35 @@ nextflow_pipeline {
             assert markdup_file.readLines().find { it.startsWith("# MarkDuplicates") }.contains("--DUPLEX_UMI false")
         }
     }
+
+    test("Test profile with FastQ Screen") {
+
+        tag "fastq_screen"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                // the FastQ_Screen_Genomes folder made by tests/scripts/build_fastq_screen_db.sh, which the CI
+                // workflow builds; run this test locally with FASTQ_SCREEN_DB set to that folder
+                fastq_screen_db = System.getenv("FASTQ_SCREEN_DB")
+            }
+        }
+
+        then {
+            assert workflow.success
+
+            // the E. coli reads hit the E. coli database that the script builds from the test reference
+            ["R1", "R2"].each { read ->
+                def screen = new File("$outputDir/QC/fastqscreen/NanoMB1Rep1_HJK2GDSX3_sampled_${read}_screen.txt")
+                assert screen.exists()
+                def row = screen.readLines().findAll { it.trim() && !it.startsWith("#") && !it.startsWith("%") }[1].split("\t")
+                assert row[0] == "ecoli_atcc10798"
+                assert (row[5] as double) > 95.0
+            }
+
+            // and the MultiQC report has a FastQ Screen section
+            def multiqc_data = new File("$outputDir/QC/multiqc/multiqc_data")
+            assert multiqc_data.list().any { it.startsWith("multiqc_fastq_screen") }
+        }
+    }
 }

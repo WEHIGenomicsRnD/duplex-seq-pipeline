@@ -86,7 +86,11 @@ The consensus calling and filtering options (`--min_reads`, `--min_base_quality`
 
 ### Development
 
-The tests use [nf-test](https://www.nf-test.com): `nf-test test --profile test,docker`. The linters (prettier, editorconfig,
+The tests use [nf-test](https://www.nf-test.com): `nf-test test --profile test,docker`. The FastQ Screen test needs a
+database, so run it with `FASTQ_SCREEN_DB` set to the `FastQ_Screen_Genomes` folder made by
+`tests/scripts/build_fastq_screen_db.sh` (bowtie2 is in `tests/scripts/environment.yml`). A GitHub Actions workflow
+(`.github/workflows/nf-test.yml`) builds that database and runs all tests with docker on pushes and pull requests to `main`
+and `dev`. The linters (prettier, editorconfig,
 `nextflow lint`) run as [pre-commit](https://pre-commit.com) hooks. `plans/nextflow-rewrite.md` is the plan of the rewrite and
 `CHANGELOG.md` lists the changes with respect to the Snakemake version.
 

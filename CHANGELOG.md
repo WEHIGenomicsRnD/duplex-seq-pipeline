@@ -35,7 +35,10 @@ agree. The rewrite plan is in [`plans/nextflow-rewrite.md`](plans/nextflow-rewri
 - `--fastq_screen_db`, a FastQ Screen database folder (see below), and `tests/scripts/build_fastq_screen_db.sh`, which
   builds a one-genome test database from a FASTA file with `bowtie2-build`. The database is not part of the repository.
 - Test data (`tests/data`: a 1 kb window of E. coli ATCC 10798 NanoSeq reads, the GCA_002087985.1 reference and a target
-  BED), the `test` profile and nf-test tests (`nf-test.config`, `tests/default.nf.test`).
+  BED), the `test` profile and nf-test tests (`nf-test.config`, `tests/default.nf.test`), including one for FastQ Screen
+  that needs `FASTQ_SCREEN_DB`.
+- A GitHub Actions workflow (`.github/workflows/nf-test.yml`) that runs the nf-tests with docker on pushes and pull requests
+  to `main` and `dev` only. It first builds the FastQ Screen test database with bowtie2 from `tests/scripts/environment.yml`.
 - `--markdup_duplex_umi` (on by default): MarkDuplicates marks duplicates per duplex molecule (`--DUPLEX_UMI true`); turn it
   off for single-UMI read structures or to reproduce the per-strand marking of 0.1.0.
 - `meta.yml` for the local modules, in the nf-core format (checked against the nf-core module meta schema).
