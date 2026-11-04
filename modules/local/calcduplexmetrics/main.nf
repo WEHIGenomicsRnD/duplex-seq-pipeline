@@ -3,7 +3,7 @@ process CALC_DUPLEX_METRICS {
     label 'process_high'
 
     conda "${moduleDir}/environment.yml"
-    container 'ghcr.io/wehigenomicsrnd/calculate-duplex-metrics:0.2.0'
+    container 'ghcr.io/wehigenomicsrnd/calculate-duplex-metrics:0.2.1'
 
     input:
     tuple val(meta), path(input)

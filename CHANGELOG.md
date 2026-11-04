@@ -159,7 +159,9 @@ and this branch with apptainer, with `--markdup_duplex_umi false` and with the d
 - **nvc:** 801 against 761 sites (697 shared). Every site in both is an N-only call, so no variant is called and both
   filtered VCFs are empty. The sites that differ are consensus bases that one version calls as N.
 - **Duplex metrics:** Snakemake has one more metric, `unpaired_families`. It installs `calculate-duplex-metrics` from the
-  repository at run time (commit `39fc6c9`), which has the metric; the `0.2.0` container does not.
+  repository at run time (commit `39fc6c9`), which has the metric; the `0.2.0` container used in this run did not. The pipeline
+  now uses `calculate-duplex-metrics` 0.2.1, which has it: on the same BAM all 20 metrics are identical to the Snakemake run
+  (checked directly, and the nf-tests give 20 metrics; the comparison itself was not repeated).
 - **samtools stats:** 101 pairs that samtools 1.14 reports as outward oriented are inward oriented in 1.23 and later (the
   same on either BAM); the duplicate counts differ because of the marked BAM (see above).
 - **Picard:** 388 against 390 optical duplicates, from Picard 2.27.4 against 3.5.0 (2.27.4 gives 388 on the Nextflow BAM
@@ -170,8 +172,7 @@ and this branch with apptainer, with `--markdup_duplex_umi false` and with the d
 
 Decision: fgbio 3.1.2 is kept (as in the nf-core modules), to take improvements where they come. The consensus, and with
 it the filtered BAM and the nvc calls, therefore do not match 0.1.0 exactly; exact parity would need fgbio 1.4.0 in the
-local and nf-core fgbio modules. The duplex metrics will gain `unpaired_families` with `calculate-duplex-metrics` 0.2.1
-(see the plan).
+local and nf-core fgbio modules. The duplex metrics container is `calculate-duplex-metrics` 0.2.1, which has `unpaired_families`.
 
 ## [0.1.0]
 
