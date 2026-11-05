@@ -39,6 +39,10 @@ agree. The rewrite plan is in [`plans/nextflow-rewrite.md`](plans/nextflow-rewri
   that needs `FASTQ_SCREEN_DB`.
 - A GitHub Actions workflow (`.github/workflows/nf-test.yml`) that runs the nf-tests with docker on pushes and pull requests
   to `main` and `dev` only. It first builds the FastQ Screen test database with bowtie2 from `tests/scripts/environment.yml`.
+- `--merge_lanes`: the rows of a sample in the samplesheet are its lanes, and their files are concatenated in lane order
+  into one pair of FASTQ files per sample (nf-core `CAT_FASTQ`, in the subworkflow `MERGE_LANES`). The lane is read from file
+  names such as `_L001_R1.fastq.gz`, and the rows are checked before anything runs. Without the option a repeated sample
+  name is still an error, but the check is now made at start-up and no longer by the samplesheet schema.
 - `--markdup_duplex_umi` (on by default): MarkDuplicates marks duplicates per duplex molecule (`--DUPLEX_UMI true`); turn it
   off for single-UMI read structures or to reproduce the per-strand marking of 0.1.0.
 - `meta.yml` for the local modules, in the nf-core format (checked against the nf-core module meta schema).

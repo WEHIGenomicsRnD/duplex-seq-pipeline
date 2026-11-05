@@ -1,0 +1,97 @@
+nextflow_pipeline {
+
+    name "Test lane merging"
+    script "main.nf"
+
+    test("The lanes of a sample are merged") {
+
+        tag "lanes"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input = "${projectDir}/tests/data/samplesheet_lanes.csv"
+                merge_lanes = true
+            }
+        }
+
+        then {
+            assert workflow.success
+
+            // reads in the BAM file of a sample (R1 and R2): NanoMB1Rep1 has three lanes of 3,000 read pairs,
+            // NanoMB1Rep2 has one lane of 3,000 read pairs and is not touched by the merging
+            def reads_of = { sample ->
+                new File("$outputDir/QC/samtools/flagstat/${sample}.flagstat").readLines()
+                    .find { it.endsWith("paired in sequencing") }
+                    .split(" ")[0] as int
+            }
+            assert reads_of("NanoMB1Rep1") == 18000
+            assert reads_of("NanoMB1Rep2") == 6000
+
+            // one result per sample, none per lane
+            assert new File("$outputDir/mapped_bams").list().findAll { it.endsWith(".bam") }.sort() == [
+                "NanoMB1Rep1_mapped_merged.bam",
+                "NanoMB1Rep2_mapped_merged.bam",
+            ]
+            assert new File("$outputDir/consensus/NanoMB1Rep1_consensus_mapped_merged_filtered.bam").exists()
+            assert new File("$outputDir/QC/duplex_metrics/NanoMB1Rep2_metrics.csv").exists()
+        }
+    }
+
+    test("A repeated sample name without --merge_lanes is an error") {
+
+        tag "lanes"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input = "${projectDir}/tests/data/samplesheet_lanes.csv"
+            }
+        }
+
+        then {
+            assert workflow.failed
+            def output = (workflow.stdout + workflow.stderr).join("\n")
+            assert output.contains("Sample 'NanoMB1Rep1' is on 3 rows")
+            assert output.contains("--merge_lanes")
+        }
+    }
+
+    test("R1 and R2 of a row from different lanes is an error") {
+
+        tag "lanes"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input = "${projectDir}/tests/data/samplesheet_lanes_mismatch.csv"
+                merge_lanes = true
+            }
+        }
+
+        then {
+            assert workflow.failed
+            def output = (workflow.stdout + workflow.stderr).join("\n")
+            assert output.contains("Sample 'NanoMB1Rep1': read 1 and read 2 of one row are from different lanes")
+        }
+    }
+
+    test("File names without a lane are an error when lanes are merged") {
+
+        tag "lanes"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input = "${projectDir}/tests/data/samplesheet_lanes_nolane.csv"
+                merge_lanes = true
+            }
+        }
+
+        then {
+            assert workflow.failed
+            def output = (workflow.stdout + workflow.stderr).join("\n")
+            assert output.contains("cannot read the lane of read 1 from 'NanoMB1Rep1_HJK2GDSX3_sampled_R1.fastq.gz'")
+        }
+    }
+}

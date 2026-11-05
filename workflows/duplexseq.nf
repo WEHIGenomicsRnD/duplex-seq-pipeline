@@ -5,6 +5,7 @@
 */
 
 include { GUNZIP as GUNZIP_FASTA } from '../modules/nf-core/gunzip/main'
+include { MERGE_LANES } from '../subworkflows/local/merge_lanes/main'
 include { PREPARE_REFERENCE } from '../subworkflows/local/prepare_reference/main'
 include { FASTQ_ALIGN_UMI } from '../subworkflows/local/fastq_align_umi/main'
 include { CONSENSUS } from '../subworkflows/local/consensus/main'
@@ -20,7 +21,7 @@ include { softwareVersionsToYAML } from '../subworkflows/local/utils_pipeline/ma
 
 workflow DUPLEXSEQ {
     take:
-    ch_samplesheet // channel: [ val(meta), [ path(fastq_1), path(fastq_2) ], path(umi_file) or [] ]
+    ch_samplesheet // channel: [ val(meta), [ path(fastq_1), path(fastq_2) ] (all lanes for a sample with several), path(umi_file) or [] ]
 
     main:
 
@@ -42,9 +43,13 @@ workflow DUPLEXSEQ {
 
     PREPARE_REFERENCE(ch_fasta, ch_fasta_fai, ch_dict, ch_bwa_index)
 
+    // the lanes of a sample are merged first (only with --merge_lanes), so that everything below sees one pair of FASTQ files per sample
+    MERGE_LANES(ch_samplesheet)
+    ch_samples = MERGE_LANES.out.samplesheet
+
     // FASTQ -> UMI-extracted, aligned BAM
-    ch_reads = ch_samplesheet.map { meta, reads, _umis -> [meta, reads] }
-    ch_umis = ch_samplesheet.map { meta, _reads, umis -> [meta, umis] }
+    ch_reads = ch_samples.map { meta, reads, _umis -> [meta, reads] }
+    ch_umis = ch_samples.map { meta, _reads, umis -> [meta, umis] }
 
     ch_fasta_value = ch_fasta.first()
 

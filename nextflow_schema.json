@@ -28,6 +28,11 @@
                     "default": "results",
                     "fa_icon": "fas fa-folder-open"
                 },
+                "merge_lanes": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Merge the lanes of a sample: rows of the samplesheet with the same sample name are concatenated, in lane order, into one pair of FASTQ files. The lane is read from the file names, which have to end like `_L001_R1.fastq.gz` and `_L001_R2.fastq.gz` (any lane number). Without this option a sample name that is repeated is an error."
+                },
                 "publish_dir_mode": {
                     "type": "string",
                     "default": "copy",

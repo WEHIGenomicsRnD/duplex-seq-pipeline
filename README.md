@@ -52,10 +52,27 @@ sample,fastq_1,fastq_2
 NanoMB1Rep1,NanoMB1Rep1_R1.fastq.gz,NanoMB1Rep1_R2.fastq.gz
 ```
 
+If a sample was sequenced on several lanes, give every lane its own row with the same sample name and use `--merge_lanes`.
+The files of the lanes are then concatenated, in lane order, into one pair of FASTQ files per sample before anything else
+runs. The lane is read from the file names, which have to end like `_L001_R1.fastq.gz` and `_L001_R2.fastq.gz` (any lane
+number; the bcl2fastq form `_L001_R1_001.fastq.gz` works too):
+
+```csv
+sample,fastq_1,fastq_2
+NanoMB1Rep1,NanoMB1Rep1_L001_R1.fastq.gz,NanoMB1Rep1_L001_R2.fastq.gz
+NanoMB1Rep1,NanoMB1Rep1_L002_R1.fastq.gz,NanoMB1Rep1_L002_R2.fastq.gz
+```
+
+Without `--merge_lanes` a sample name on more than one row is an error. With it, the run stops at the start if a lane
+cannot be read from a file name, if R1 and R2 of a row are from different lanes, if a lane is listed twice for a sample, or
+if the rows of a sample have different read structures or UMI files. A sample on a single row is left as it is. The merged
+files are only kept in the work directory.
+
 The main parameters (all in `nextflow_schema.json`):
 
 | Parameter                             | Default             | Description                                                                                                                                                                                                                             |
 | ------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--merge_lanes`                       | `false`             | The rows of a sample in the samplesheet are its lanes: merge them (see above).                                                                                                                                                          |
 | `--input`, `--outdir`                 |                     | The samplesheet and the output directory (`results`).                                                                                                                                                                                   |
 | `--fasta`                             |                     | Reference genome FASTA (may be gzipped). `--fasta_fai`, `--dict` and `--bwa` take indexes that already exist.                                                                                                                           |
 | `--read_structure`                    | `3M2S146T 3M2S146T` | fgbio read structure of the two reads.                                                                                                                                                                                                  |
