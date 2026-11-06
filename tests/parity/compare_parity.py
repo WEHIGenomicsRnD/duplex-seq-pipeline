@@ -337,8 +337,8 @@ def main():
     both("calc-duplex-metrics CSV", f"{s_dir}/QC/duplex_metrics/{sample}_metrics.csv", f"{n_dir}/QC/duplex_metrics/{sample}_metrics.csv", compare_metrics)
 
     print("\n== samtools, mapped sample")
-    both("samtools stats (summary numbers)", f"{s_dir}/QC/samtools/stats/{sample}.txt", f"{n_dir}/QC/samtools/stats/{sample}.stats", compare_stats)
-    both("samtools flagstat", f"{s_dir}/QC/samtools/flagstat/{sample}.txt", f"{n_dir}/QC/samtools/flagstat/{sample}.flagstat", compare_flagstat)
+    both("samtools stats (summary numbers)", f"{s_dir}/QC/samtools/stats/{sample}.txt", f"{n_dir}/QC/samtools/stats/{sample}_mapped.stats", compare_stats)
+    both("samtools flagstat", f"{s_dir}/QC/samtools/flagstat/{sample}.txt", f"{n_dir}/QC/samtools/flagstat/{sample}_mapped.flagstat", compare_flagstat)
     print("== samtools, consensus")
     both("samtools stats consensus", f"{s_dir}/QC/consensus/samtools/stats/{sample}.txt", f"{n_dir}/QC/consensus/{sample}_consensus.stats", compare_stats)
     both("samtools flagstat consensus", f"{s_dir}/QC/consensus/samtools/flagstat/{sample}.txt", f"{n_dir}/QC/consensus/{sample}_consensus.flagstat", compare_flagstat)
@@ -347,12 +347,12 @@ def main():
     both("MarkDuplicates metrics", f"{s_dir}/QC/mark_duplicates/{sample}.txt", first(f"{n_dir}/QC/mark_duplicates/*.metrics.txt"), compare_picard)
 
     print("\n== Qualimap")
-    both("Qualimap mapped", f"{s_dir}/QC/qualimap/{sample}/genome_results.txt", f"{n_dir}/QC/qualimap/{sample}/genome_results.txt", compare_qualimap)
+    both("Qualimap mapped", f"{s_dir}/QC/qualimap/{sample}/genome_results.txt", f"{n_dir}/QC/qualimap/{sample}_mapped/genome_results.txt", compare_qualimap)
     both("Qualimap consensus", f"{s_dir}/QC/consensus/qualimap/{sample}/genome_results.txt", f"{n_dir}/QC/consensus/{sample}_consensus/genome_results.txt", compare_qualimap)
 
     print("\n== Raw read QC")
     for r in ("R1", "R2"):
-        both(f"FastQC {r} (basic statistics)", first(f"{s_dir}/QC/fastQC/{sample}_{r}_fastqc.zip"), first(f"{n_dir}/QC/fastqc/{sample}_{r[1]}_fastqc.zip"), compare_fastqc)
+        both(f"FastQC {r} (basic statistics)", first(f"{s_dir}/QC/fastQC/{sample}_{r}_fastqc.zip"), first(f"{n_dir}/QC/fastqc/{sample}_reads_{r[1]}_fastqc.zip"), compare_fastqc)
         both(f"FastQ Screen {r}", first(f"{s_dir}/QC/fastqScreen/{sample}_{r}_screen.txt"), first(f"{n_dir}/QC/fastqscreen/*_{r}_screen.txt"), compare_screen)
 
     print("\n== MultiQC reports present")

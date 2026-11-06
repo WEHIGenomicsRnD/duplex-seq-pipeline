@@ -29,7 +29,7 @@ nextflow_pipeline {
             assert filtered_vcf.readLines().any { it.startsWith("##FORMAT=<ID=DP,") }
 
             // samtools flagstat reads the duplicate-marked BAM, so its duplicate count is Picard's
-            def flagstat = new File("$outputDir/QC/samtools/flagstat/NanoMB1Rep1.flagstat").readLines()
+            def flagstat = new File("$outputDir/QC/samtools/flagstat/NanoMB1Rep1_mapped.flagstat").readLines()
             def flagstat_duplicates = flagstat.find { it.endsWith("primary duplicates") }.split(" ")[0] as int
             def markdup_file = new File("$outputDir/QC/mark_duplicates/NanoMB1Rep1_mapped_merged_markdup.metrics.txt")
             def markdup = markdup_file
@@ -54,6 +54,18 @@ nextflow_pipeline {
             def multiqc_data = new File("$outputDir/QC/multiqc/multiqc_data")
             assert multiqc_data.exists()
             assert multiqc_data.list().any { it.startsWith("duplex_seq") }
+
+            // one expandable row per sample: the duplex metrics on the sample row, the raw reads, raw BAM and
+            // consensus BAM as its fold-outs
+            def general_stats = new File("$multiqc_data/multiqc_general_stats.txt").readLines().collect { it.split("\t", -1)[0] }
+            assert general_stats.containsAll([
+                "NanoMB1Rep1",
+                "NanoMB1Rep1 R1 reads",
+                "NanoMB1Rep1 R2 reads",
+                "NanoMB1Rep1 Raw BAM",
+                "NanoMB1Rep1 Consensus BAM",
+            ])
+            assert general_stats.size() == 6
         }
     }
 

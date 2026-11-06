@@ -5,15 +5,34 @@ report_section_order:
   duplex_seq:
     order: 1000
 
-# Raw reads and consensus reads of one sample are shown as sub-rows of the same sample
-# (needs MultiQC >= 1.22)
+# One expandable row per sample in the General Statistics table (needs MultiQC >= 1.22). The
+# sample row shows the duplex metrics; its fold-out shows the stats of each input:
+#   <sample>_reads_1 / _reads_2   FastQC of the raw reads (ext.prefix of FASTQC)
+#   <sample>_mapped               raw BAM (samtools, Picard)
+#   <sample>_consensus            consensus BAM (samtools)
+# The suffixes are matched at the end of the name, and a sample name that itself ends in
+# "_1" or "_mapped" is not mistaken for one. The sample row has to exist in no module but the
+# duplex one: a module that has a "<sample>" row next to its "<sample>_<suffix>" rows renames the
+# group to "<sample> (grouped)", which would not merge with the duplex row.
 table_sample_merge:
-  R1: "_R1"
-  R2: "_R2"
-  Consensus: "_consensus"
+  "R1 reads":
+    type: regex
+    pattern: "_reads_1$"
+  "R2 reads":
+    type: regex
+    pattern: "_reads_2$"
+  "Raw BAM":
+    type: regex
+    pattern: "_mapped$"
+  "Consensus BAM":
+    type: regex
+    pattern: "_consensus$"
 
-# "_mapped_merged" (and everything after it) is cut from sample names, so the mapped BAM outputs
-# are named after the sample. "_consensus" is deliberately not cut, so the consensus outputs stay
-# separate samples and do not collide with the raw ones in the plots.
+# Name the BAM-derived outputs "<sample>_mapped" and "<sample>_consensus". Everything from
+# "_merged" on is cut: "S_mapped_merged_markdup" gives "S_mapped"; the consensus BAMs are first
+# stripped of "_mapped_merged..." ("S_consensus_mapped_merged_filtered" gives "S_consensus").
 extra_fn_clean_exts:
-  - "_mapped_merged"
+  - type: regex
+    pattern: "(?<=_consensus)_mapped_merged.*$"
+  - type: regex
+    pattern: "_merged.*$"

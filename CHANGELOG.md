@@ -29,7 +29,10 @@ agree. The rewrite plan is in [`plans/nextflow-rewrite.md`](plans/nextflow-rewri
 - A single MultiQC report (`QC/multiqc`) that replaces the two reports of Snakemake. It uses the
   [duplex-multiqc](https://github.com/WEHIGenomicsRnD/duplex-multiqc) plugin 0.1.1 on MultiQC 1.35 (container
   `ghcr.io/wehigenomicsrnd/duplex-multiqc`) and the packaged `assets/multiqc_config.yml`, which lists the duplex metrics
-  first and shows the raw and the consensus rows of a sample together. `--multiqc_config` is applied on top of it.
+  first and folds each sample's rows into one expandable row in the General Statistics table: the sample row shows the
+  duplex metrics, and the fold-out shows the FastQC rows (R1, R2), the raw BAM and the consensus BAM. This needs the stats
+  outputs to be named `<sample>_reads_{1,2}` (FastQC), `<sample>_mapped` (samtools stats and flagstat, Qualimap) and
+  `<sample>_consensus`. `--multiqc_config` is applied on top of it.
 - Guards against a silently missing duplex section in the MultiQC report (a container without the plugin exits 0):
   MultiQC runs with `--strict`, and the pipeline fails if the plugin wrote none of its files.
 - `--fastq_screen_db`, a FastQ Screen database folder (see below), and `tests/scripts/build_fastq_screen_db.sh`, which

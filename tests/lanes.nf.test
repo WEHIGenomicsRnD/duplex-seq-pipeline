@@ -21,7 +21,7 @@ nextflow_pipeline {
             // reads in the BAM file of a sample (R1 and R2): NanoMB1Rep1 has three lanes of 3,000 read pairs,
             // NanoMB1Rep2 has one lane of 3,000 read pairs and is not touched by the merging
             def reads_of = { sample ->
-                new File("$outputDir/QC/samtools/flagstat/${sample}.flagstat").readLines()
+                new File("$outputDir/QC/samtools/flagstat/${sample}_mapped.flagstat").readLines()
                     .find { it.endsWith("paired in sequencing") }
                     .split(" ")[0] as int
             }
