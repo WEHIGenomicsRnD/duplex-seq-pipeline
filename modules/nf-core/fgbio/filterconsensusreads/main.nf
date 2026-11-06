@@ -48,7 +48,7 @@ process FGBIO_FILTERCONSENSUSREADS {
     fgbio \\
         -Xmx${mem_gb}g \\
         --tmp-dir=. \\
-        --compression=0 \\
+        --compression=${task.ext.compression ?: 1} \\
         FilterConsensusReads \\
         --input ${bam} \\
         --output ${prefix}.bam \\
