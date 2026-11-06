@@ -114,7 +114,7 @@ Differences that change outputs:
 
 - Move `nf-pipeline/` to the repo root. The Snakemake code stays under `workflow/` until parity is confirmed.
 - **`nextflow.config`:**
-  - `manifest` (`nextflowVersion '!>=25.04.0'`) and plugin `nf-schema@2.5.1`;
+  - `manifest` (`nextflowVersion '!>=25.10.0'`) and plugin `nf-schema@2.7.2`;
   - `docker.registry` and `singularity.registry = 'quay.io'`;
   - `process.resourceLimits` replaces the unused `max_*` params;
   - profiles: `docker`, `singularity`, `apptainer`, `conda`, `mamba`, `wave`, `test`, `debug`;

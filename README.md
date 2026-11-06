@@ -38,7 +38,7 @@ nextflow run . -profile test,docker --outdir results
 nextflow run . -profile docker --input samplesheet.csv --fasta genome.fasta --outdir results
 ```
 
-You need Nextflow 25.04 or later and a container engine: use the profile `docker`, `singularity` or `apptainer` (`wave`
+You need Nextflow 25.10 or later and a container engine: use the profile `docker`, `singularity` or `apptainer` (`wave`
 builds containers on demand). The `conda` and `mamba` profiles cannot run the duplex metrics, because
 calc-duplex-metrics is not on conda and only comes as a container
 (`ghcr.io/wehigenomicsrnd/calculate-duplex-metrics`). Run `nextflow run . --help` for all parameters.
