@@ -435,13 +435,13 @@ nextflow run . -profile test,<engine> --outdir results \
 
 The index directory is outside the repo (the sandbox only keeps what is written to a mounted path, so `/vast/scratch/users/cmero.ma/fastq_screen_test_db` is a mount set up by the user; elsewhere under `/vast/scratch` writes are lost on reset). Verified (apptainer, test profile): the index built with the bowtie2 2.5.3 module (15 MB) is read by the container's bowtie2 (fastq-screen 0.16.0); R1 and R2 hit `ecoli_atcc10798` at 99.45% and 98.13% one-hit-one-genome, and MultiQC gets a FastQ Screen section. A folder without `fastq_screen.conf` and a nonexistent folder both fail with clear errors, and the pipeline runs unchanged without the parameter.
 
-## Session 3 (in progress): duplex-multiqc container and duplex metrics
+## Session 3: duplex-multiqc container and duplex metrics
 
 **Done**
 
-- `MULTIQC` runs from `ghcr.io/wehigenomicsrnd/duplex-multiqc:0.1.0` (`conf/modules.config`, with a matching conda environment in `assets/multiqc_duplex_environment.yml`; the plugin git tag is `0.1.0`). Nextflow pulls the image through apptainer; MultiQC 1.35 and plugin 0.1.0 are registered (module `duplex_seq`, hook `execution_start`).
+- `MULTIQC` runs from `ghcr.io/wehigenomicsrnd/duplex-multiqc` (0.1.0 at first, 0.1.1 now) (`conf/modules.config`, with a matching conda environment in `assets/multiqc_duplex_environment.yml`; the plugin git tag is `0.1.0`). Nextflow pulls the image through apptainer; MultiQC 1.35 and plugin 0.1.0 are registered (module `duplex_seq`, hook `execution_start`).
 - Local module `CALC_DUPLEX_METRICS` (`modules/local/calcduplexmetrics/`, image `ghcr.io/wehigenomicsrnd/calculate-duplex-metrics:0.2.1` (0.2.0 until the `unpaired_families` metric was released), input BAM mode on the mapped BAM like Snakemake, `--target_bed` from `tests/data/target.bed`), called from the `QC` subworkflow; output in `QC/duplex_metrics/`. The tool version recorded in `software_versions.yml` is the image tag (the R package itself reports 0.1.0 inside the 0.2.0 image).
-- `assets/multiqc_config.yml` (always used; `--multiqc_config` is applied on top): duplex section first, `table_sample_merge` for `_R1`/`_R2`/`_consensus`, `extra_fn_clean_exts: _mapped_merged`. Verified: raw and consensus rows merge under one sample (`NanoMB1Rep1`, `NanoMB1Rep1 Consensus`).
+- `assets/multiqc_config.yml` (always used; `--multiqc_config` is applied on top): duplex section first, and one expandable row per sample in the General Statistics table (superseded by "MultiQC: one expandable row per sample" below).
 - Real apptainer run: 29 processes succeed; the duplex metrics CSV has the plugin's `sample,metric,value` format (efficiency 0.0455, drop-out 0.329, on-target rate 0.869 with the test BED).
 
 **Resolved (duplex-multiqc 0.1.1)**
@@ -450,7 +450,7 @@ The index directory is outside the repo (the sandbox only keeps what is written 
 - `CALC_DUPLEX_METRICS` now passes `--sample ${meta.id}`. The plugin takes the sample name from the CSV column, which bypasses MultiQC's name cleaning, so without it the metrics appeared as a separate `NanoMB1Rep1_mapped_merged` row. They now merge into the `NanoMB1Rep1` row (small deviation from the Snakemake CSV, which uses the BAM name).
 - `MULTIQC` runs with `--strict`, so a crashing module fails the task. Tested on the same inputs: with the broken 0.1.0 image, default MultiQC exits 0 with no duplex files, `--strict` exits 1; with 0.1.1 both pass and write 9 files.
 
-**Added (not yet committed)**
+**Added (committed)**
 
 - `GET_READ_INFO` local module (`modules/local/getreadinfo/`), run in `QC` when `--output_read_info` is set: `get_read_info.py | sort -k 2,7 -k 1,1 -u --parallel -S <read_info_buffer_size> | cut -f 2-7 | uniq --count`, then `format_read_info.py`, failing if no reads are found; output in `QC/read_info/`. The `bin/` scripts gained a `#!/usr/bin/env python3` shebang. `CALC_DUPLEX_METRICS` takes either the BAM or the read info table (`--input_format bam|rinfo`); `--cores`, `--sort_mem` and `--bam_chunk_size` apply to BAM input only, as in Snakemake.
 - Verified with apptainer on the test data: the read info table has 5,565 families plus a header, and the duplex metrics from it are **identical** to those computed from the BAM. The stub run passes with and without `--output_read_info`.
@@ -469,7 +469,7 @@ The index directory is outside the repo (the sandbox only keeps what is written 
 
 **`bin/filter_vcf.py` rewritten** (readable names, comments, command line `filter_vcf.py INPUT_VCF OUTPUT_VCF` instead of the Snakemake globals, unused imports and dead code removed). Checked against the original on synthetic nvc-style VCFs covering every branch (plain SNV, only-N ALT, N in first/middle/last position of a multi-allelic ALT, empty and missing counts): identical output. Two deliberate differences, because no real nvc VCF was available to confirm the original's behaviour: (1) when an N allele is removed, other INFO fields (for example `AN`) are kept; the original rebuilt INFO as `AC=...;AF=...` and dropped everything else; (2) the DP header line is added before `#CHROM` if the VCF has no `##FORMAT` header lines (the original then omitted it). The editorconfig hook no longer excludes `bin/`; `get_read_info.py` got a whitespace-only wrap of one `print` call to pass it. No Python linter (ruff, flake8) is installed in the sandbox and installing one was not allowed, so the script is formatted by hand in black/ruff style and has not been run through ruff.
 
-## Variant calling (not yet committed)
+## Variant calling
 
 **Done**
 
@@ -499,8 +499,42 @@ The Claude sandbox job now has a 16 GB memory limit (it was 8 GB earlier in the 
 
 Done on the test data (see "Parity with 0.1.0" in `CHANGELOG.md`; script and set-up in `tests/parity`). Alignment, FastQ Screen, FastQC, 19 of 20 duplex metrics and the Picard per-strand metrics are identical; every other difference was traced to a tool version (fgbio 1.4.0 against 3.1.2 for grouping and consensus calling, samtools, Picard, Qualimap module options, `calculate-duplex-metrics` HEAD against the 0.2.0 container). Decided: keep fgbio 3.1.2 (no pin to 1.4.0). Open: the `MQ` tag on supplementary records (not isolated), `CALC_DUPLEX_METRICS` now uses `calculate-duplex-metrics` 0.2.1 (adds `unpaired_families`): all 20 metrics, identical to the Snakemake run on the parity BAM, and the nf-tests pass. The run used Snakemake's own conda environments under `/vast/scratch/users/cmero.ma/snakemake_parity`.
 
-## Lane merging (`--merge_lanes`, not yet committed)
+## Lane merging (`--merge_lanes`)
 
 - Samples on several rows of the samplesheet are merged when `--merge_lanes` is set: `groupLanes` in `utils_pipeline` reads the lane from file names such as `_L001_R1.fastq.gz` (also the bcl2fastq form `_L001_R1_001.fastq.gz`), checks the rows before anything runs (R1 and R2 of a row from the same lane, no lane twice, one read structure and UMI file per sample), and sorts the lanes numerically; the subworkflow `MERGE_LANES` concatenates them with nf-core `CAT_FASTQ` (same container as `GUNZIP`, so nothing new for `containers.md`) and samples with one lane pass through. Without the flag a repeated sample name is an error, now raised by `groupLanes` because `uniqueEntries` was removed from `assets/schema_input.json`. Merged FASTQ files stay in the work directory.
 - Test data: `tests/data/lanes` (made by `tests/scripts/make_lane_test_data.sh`: `NanoMB1Rep1` in three lanes and `NanoMB1Rep2` in one, 3,000 read pairs each) and three samplesheets; `tests/lanes.nf.test` has the merge test and three error tests (repeated sample without the flag, R1 and R2 from different lanes, file names without a lane).
 - Verified: the four lane tests pass, and an equivalence check on the sample with three lanes (listed in the order L002, L003, L001 in the samplesheet): the merged FASTQ files are byte-identical to the three lane files concatenated by hand in lane order, and a run on the hand-made files (no merging) gives identical mapped, grouped and consensus BAMs, VCFs, duplex metrics and flagstat.
+
+## MultiQC: one expandable row per sample
+
+- The General Statistics table showed two `1-C` rows (duplex metrics; raw BAM stats with a `Consensus` sub-row) and the FastQC rows `1-C_1` / `1-C_2` separately. Cause (read in the MultiQC 1.35 source): grouping happens per module, and a module that has both `<sample>` and `<sample>_<suffix>` rows renames the group to `<sample> (grouped)`, which cannot merge with the duplex module's `<sample>` row. No config alone can avoid that, so the stats of the raw BAM must not be named exactly like the sample.
+- Fix: `FASTQC` writes `<sample>_reads_{1,2}`, and `SAMTOOLS_STATS`, `SAMTOOLS_FLAGSTAT` and `QUALIMAP_BAMQC` write `<sample>_mapped` (`conf/modules.config`; published names change, e.g. `QC/samtools/flagstat/<sample>_mapped.flagstat`). `assets/multiqc_config.yml` groups by regexes anchored at the end of the name (`_reads_1$`, `_reads_2$`, `_mapped$`, `_consensus$`; labels `R1 reads`, `R2 reads`, `Raw BAM`, `Consensus BAM`), so a sample called `Rep_1` is not mistaken for read 1, and `extra_fn_clean_exts` cuts `_merged...` (consensus names first lose `_mapped_merged...`).
+- Verified: a real pipeline run gives the five rows (`S`, `S R1 reads`, `S R2 reads`, `S Raw BAM`, `S Consensus BAM`; asserted in `tests/default.nf.test`), and MultiQC on synthetic inputs with samples called `Rep_1` and `Rep_2` folds correctly with the duplex values on the sample row. The user checked the report on a real sample run. Not exercised: Qualimap names (not in the user's report).
+- `tests/parity/compare_parity.py` and the flagstat paths in the nf-tests use the new names.
+
+## fgbio FilterConsensusReads compression (module patch)
+
+- On a real sample the published `*_consensus_mapped_merged_filtered.bam` was 1.2 GB against 98 MB for the merged BAM and 83 MB for the clipped one. The nf-core module hard-codes `--compression=0` (uncompressed output); the PR history gives no reason. `PICARD_SORTSAM_FILTERED` recompresses the next step, which hid it downstream.
+- Fixed with a module patch (`modules/nf-core/fgbio/filterconsensusreads/fgbio-filterconsensusreads.diff`, recorded in `modules.json`): `--compression=${task.ext.compression ?: 1}`. Test data: merged 1.12 MB, filtered 1.0 MB, clipped 0.81 MB. The real sample has not been re-run.
+
+## Plugin and Nextflow versions
+
+- `nf-schema` 2.5.1 gave `Unrecognized config option 'validation.*'` warnings on Nextflow 26.04; 2.7.2 does not (stub runs on 26.04.3 and 25.10.0). nf-schema 2.7.2 needs Nextflow >= 25.10.0, so `manifest.nextflowVersion` is now `!>=25.10.0` (README updated; CI already uses 25.10.0).
+
+## Status and outstanding items
+
+**Implemented and committed (branch `nextflow-rewrite`, nothing pushed):** scaffold and params; all preprocessing, consensus, variant-calling (nvc only) and QC subworkflows; one MultiQC report with the duplex plugin; optional lane merging; nf-tests (default, read info, per-strand marking, FastQ Screen, four lane tests); CI workflows (`nf-test.yml`, `lint.yml`, main/dev only); `meta.yml` for the local modules; README, `CHANGELOG.md`, parity script and results.
+
+**Outstanding**
+
+1. **Remove the Snakemake code** and make the docs point to release `0.1.0` as the legacy version (planned next; see the discussion: tag, not a branch; check CI, pre-commit and `.gitignore` references; rewrite the README sections; keep `tests/parity` and `bin/filter_vcf.py`; check `config/fastq_screen.conf` is unused).
+2. **First run of the CI workflows on GitHub:** docker, GHCR image visibility (calculate-duplex-metrics, duplex-multiqc), Wave images under docker, disk space, and the FastQ Screen database build. Never run there.
+3. **Release steps:** `manifest.version` is `0.2.0dev`; tag `0.2.0`, PR into `main`, release notes (mention that `main` no longer contains Snakemake once item 1 is done).
+4. **Variant-calling test with real variants:** the test data has none, so multi-allelic and DP paths only run on synthetic records.
+5. **`meta.yml` for the local subworkflows** (optional).
+6. **`MQ` tag on 21 supplementary records:** seen in the parity run, not isolated.
+7. **Re-run a real sample** with the compression patch and the new MultiQC names to confirm sizes and the report (the test data run is fine).
+8. **Qualimap in MultiQC:** Qualimap is off by default (`run_qualimap = false`, as in Snakemake), which is why the user's report has no Qualimap section; the grouping rules for its names (`<sample>_mapped`) are untested; try one run with `--run_qualimap`.
+9. **Plugin repo smoke test** (user's job, in the duplex-multiqc repo; draft step above).
+10. **Sandbox/local clean-up:** about 3.6 GB of unused images in `my_singularity_cache`; `containers.md` is local only and to be moved into the shared cache when the pipeline goes live; `nextflow_dag.*` and `dag.pdf` handling (`dag.pdf` is a Snakemake file, remove with item 1).
+11. **Upstream:** the `--compression=0` default of the nf-core module could be reported or fixed there, after which the patch can be dropped. `--fastq_screen_conf` was considered and scrapped to stay idiomatic with the nf-core module.
