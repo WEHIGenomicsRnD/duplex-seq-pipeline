@@ -33,10 +33,6 @@ insert_final_newline = unset
 trim_trailing_whitespace = unset
 indent_style = unset
 
-[/workflow/**]
-indent_size = unset
-indent_style = unset
-
 [/tests/data/**]
 charset = unset
 end_of_line = unset

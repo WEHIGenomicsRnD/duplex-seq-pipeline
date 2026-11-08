@@ -5,9 +5,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [0.2.0] - Unreleased
 
-The Nextflow rewrite of the pipeline. The Snakemake pipeline (`workflow/`, `config/`, `slurm/`; release 0.1.0) is
-unchanged apart from two whitespace fixes, and stays the reference implementation until a parity run shows that the two
-agree. The rewrite plan is in [`plans/nextflow-rewrite.md`](plans/nextflow-rewrite.md).
+The Nextflow rewrite of the pipeline. The Snakemake pipeline (release 0.1.0) is no longer in the repository; it stays
+available at the tag `0.1.0` (`git clone --branch 0.1.0 https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline.git`) and is
+the legacy version. The rewrite plan is in [`plans/nextflow-rewrite.md`](plans/nextflow-rewrite.md).
 
 ### Added
 
@@ -21,7 +21,7 @@ agree. The rewrite plan is in [`plans/nextflow-rewrite.md`](plans/nextflow-rewri
     with nf-schema together with all parameters (`nextflow_schema.json`, `assets/schema_input.json`). Relative paths are
     resolved against the folder of the samplesheet.
   - Profiles: `test`, `docker`, `singularity`, `apptainer`, `conda`, `mamba`, `wave`, `debug`. Tool resources follow
-    `config/cluster.yaml` (`conf/base.config`), and the hard-coded tool arguments of the Snakemake rules are set in
+    `config/cluster.yaml` of 0.1.0 (`conf/base.config`), and the hard-coded tool arguments of the Snakemake rules are set in
     `conf/modules.config`, where they can be overridden.
 - Variant calling with fgbio ClipBam, nvc and `bin/filter_vcf.py` (local modules `FGBIO_CLIPBAM`, `NVC`, `FILTER_VCF`).
 - `--output_read_info` and the `GET_READ_INFO` module; `CALC_DUPLEX_METRICS` reads either the BAM or the read info table.
@@ -74,7 +74,7 @@ Compared with the Snakemake pipeline (0.1.0):
   `--fastq_screen_db`, a database folder in the `FastQ_Screen_Genomes` layout of `fastq_screen --get_genomes`, because
   the nf-core module stages a whole folder) and `cluster_config` (replaced by Nextflow profiles and resources). New
   parameters are `--input` (the samplesheet), `--outdir`, `--bwa`, `--dict` and `--fasta_fai` (optional pre-built
-  indexes), `--multiqc_title`, and the memory and buffer settings that were in `config/cluster.yaml`
+  indexes), `--multiqc_title`, and the memory and buffer settings that were in `config/cluster.yaml` of 0.1.0
   (`--sort_mem`, `--bam_chunk_size`, `--read_info_buffer_size`, `--markdup_max_records_in_ram`).
 - `bin/filter_vcf.py` was rewritten (a command line, `filter_vcf.py INPUT_VCF OUTPUT_VCF`, instead of the Snakemake
   globals; readable names and comments). It gives the same output as the Snakemake script on nvc VCFs, with two
@@ -82,12 +82,14 @@ Compared with the Snakemake pipeline (0.1.0):
   AC and AF), and the DP header line is also added when a VCF has no `##FORMAT` lines.
 - The editorconfig check covers the whole repository (except the nf-core directories) and does not check the indent size
   of markdown, because prettier aligns content under numbered list items with 3 spaces. Trailing whitespace in
-  `config/config.yaml` and the docstring indentation in `slurm/slurm_utils.py` were fixed.
+  the Snakemake `config/config.yaml` and the docstring indentation in `slurm/slurm_utils.py` were fixed (before those files were removed).
 
 ### Removed
 
 - varscan is not implemented in the Nextflow pipeline (only nvc), and with it the parameters `variant_caller`,
-  `min_coverage` and `min_vaf`. The Snakemake pipeline still supports it.
+  `min_coverage` and `min_vaf`. The Snakemake pipeline (0.1.0) still supports it.
+- The Snakemake pipeline itself (`workflow/`, `config/`, `slurm/` and `dag.pdf`), and the Snakemake half of the README. The
+  tag `0.1.0` has all of it, including its README.
 - The unpublished first skeleton (`nf-pipeline/`).
 
 ### Notes

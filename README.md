@@ -1,20 +1,18 @@
 # Duplex Sequencing Pipeline
 
-A [Snakemake](https://snakemake.readthedocs.io) pipeline for processing duplex
+A [Nextflow](https://www.nextflow.io) pipeline for processing duplex
 sequencing data (e.g.
 [NanoSeq](https://www.nature.com/articles/s41586-021-03477-4)) to produce
 duplex consensus reads, variant calls, and QC metrics. The workflow follows the
 IDT recommended approach for [processing sequence data with unique molecular
 identifiers](https://plone.bcgsc.ca/services/solseq/duplex-umi-documents/idt_analysisguideline_varcall-umis-dupseqadapters/).
 
-## Nextflow version (in development)
+This is the Nextflow rewrite of the pipeline (release 0.2.0, not released yet). It runs the same analysis as the original
+[Snakemake version](#legacy-snakemake-version) (release 0.1.0) with containers or conda. On the test data both give the
+same alignments, and the remaining differences were traced to tool versions, mainly fgbio 3 against fgbio 1.4.0: see
+[`tests/parity`](tests/parity/README.md) and the [changelog](CHANGELOG.md).
 
-A Nextflow rewrite of the pipeline (release 0.2.0, not released yet) runs the same analysis with containers or conda. The
-[Snakemake version](#snakemake-version) (release 0.1.0, described further down) remains the reference implementation.
-On the test data both give the same alignments, and the remaining differences were traced to tool versions, mainly fgbio 3
-against fgbio 1.4.0: see [`tests/parity`](tests/parity/README.md) and the [changelog](CHANGELOG.md).
-
-### What it does
+## What it does
 
 1. **Reference:** a samtools index, a sequence dictionary and a bwa index are built unless you supply them. A gzipped FASTA is
    decompressed first.
@@ -28,7 +26,7 @@ against fgbio 1.4.0: see [`tests/parity`](tests/parity/README.md) and the [chang
    [calc-duplex-metrics](https://github.com/WEHIGenomicsRnD/calculate-duplex-metrics), all in a single MultiQC report that
    includes the duplex metrics (via the [duplex-multiqc](https://github.com/WEHIGenomicsRnD/duplex-multiqc) plugin).
 
-### Running
+## Running
 
 ```bash
 # check the installation on the small test data set
@@ -88,7 +86,17 @@ The consensus calling and filtering options (`--min_reads`, `--min_base_quality`
 (`--min_reads2`, `--ploidy`) keep the names and defaults of `config/config.yaml`; `ref` is now `--fasta`, and
 `FastqScreen_config` is now `--fastq_screen_db`. varscan is not implemented, only nvc.
 
-### Outputs
+### FastQ Screen database
+
+`--fastq_screen_db` is a folder holding a `fastq_screen.conf` and the bowtie2 indexes it lists. The easiest way to get a
+full set is `fastq_screen --get_genomes`, which downloads the genomes and writes the config. To screen against your own
+genomes, write the config yourself: the
+[example config](https://github.com/StevenWingett/FastQ-Screen/blob/master/fastq_screen.conf.example) from the FastQ Screen
+repository shows the `DATABASE` lines. Give the index paths relative to the folder (for example
+`DATABASE	Human	FastQ_Screen_Genomes/Human/Homo_sapiens.GRCh38`) or as absolute paths that are visible inside the container. The
+config of the folder is the one used, so keep one folder per set of genomes.
+
+## Outputs
 
 | Directory         | Content                                                                                                                                                                               |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -101,7 +109,7 @@ The consensus calling and filtering options (`--min_reads`, `--min_base_quality`
 | `QC/multiqc/`     | The MultiQC report (`multiqc_report.html`).                                                                                                                                           |
 | `pipeline_info/`  | Tool versions (`software_versions.yml`), the execution report, timeline, trace and DAG.                                                                                               |
 
-### Development
+## Development
 
 The tests use [nf-test](https://www.nf-test.com): `nf-test test --profile test,docker`. The FastQ Screen test needs a
 database, so run it with `FASTQ_SCREEN_DB` set to the `FastQ_Screen_Genomes` folder made by
@@ -109,126 +117,21 @@ database, so run it with `FASTQ_SCREEN_DB` set to the `FastQ_Screen_Genomes` fol
 (`.github/workflows/nf-test.yml`) builds that database and runs all tests with docker on pushes and pull requests to `main`
 and `dev`. The linters (prettier, editorconfig,
 `nextflow lint`) run as [pre-commit](https://pre-commit.com) hooks. `plans/nextflow-rewrite.md` is the plan of the rewrite and
-`CHANGELOG.md` lists the changes with respect to the Snakemake version.
+`CHANGELOG.md` lists the changes with respect to the Snakemake version (0.1.0).
 
-## Snakemake version
+## Legacy Snakemake version
 
-The rest of this document describes the Snakemake pipeline (release 0.1.0).
-
-## Prerequisites
-
-Before running the pipeline you will need:
-
-1. **Conda / Mamba** — all pipeline tools are installed automatically into
-   isolated conda environments.
-   [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge) is
-   recommended.
-2. **Snakemake** — see [Installation](#installation) below.
-3. **A BWA-indexed reference genome** — the reference FASTA specified in
-   `config/config.yaml` (`ref`) must be indexed before running the pipeline:
-   `bash bwa index ref/your_reference.fasta `
-4. **Bowtie2 indexes for FastQ Screen** — the FastQ Screen config
-   (`config/fastq_screen.conf`) must be configured to point to pre-built
-   Bowtie2 indexes for any genomes you wish to screen against. See [FastQ
-   Screen Configuration](#fastq-screen-configuration) below.
-
-## Installation
-
-Install Snakemake into a dedicated conda environment:
+The first release of the pipeline (0.1.0) was written in [Snakemake](https://snakemake.readthedocs.io). It is no longer
+maintained or part of this branch, but you can still run it from the tag, which has its own README with the
+installation, configuration (`config/config.yaml`, `config/fastq_screen.conf` of that tag) and output description:
 
 ```bash
+git clone --branch 0.1.0 https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline.git duplex-seq-pipeline-0.1.0
+cd duplex-seq-pipeline-0.1.0
 mamba create -c conda-forge -c bioconda -n snakemake snakemake=7.0.0-0
-conda activate snakemake
-```
-
-Clone the repository:
-
-```bash
-git clone https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline.git
-cd duplex-seq-pipeline
-```
-
-## Input
-
-Place paired-end FASTQ files in the `fastq/` directory. Files **must** follow the naming convention:
-
-```
-fastq/{sample}_R1.fastq.gz
-fastq/{sample}_R2.fastq.gz
-```
-
-The pipeline automatically detects all samples from files matching this pattern
-in the `fastq/` directory — no sample sheet is required.
-
-## Configuration
-
-Edit `config/config.yaml` before running. The key settings are:
-
-| Parameter            | Description                                                                                                                                                                                                                                               |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ref`                | Path to the reference genome FASTA. Must be BWA-indexed (see [Prerequisites](#prerequisites)). Note that the directory containing the ref needs to be writeable to create the sequence dictionary file.                                                   |
-| `read_structure`     | UMI read structure for each strand (e.g. `3M2S146T 3M2S146T`). See fgbio's [ExtractUmisFromBam](https://fulcrumgenomics.github.io/fgbio/tools/latest/ExtractUmisFromBam.html) for details.                                                                |
-| `umis`               | Path to a text file of known UMI sequences (one per line). Leave empty to skip UMI correction.                                                                                                                                                            |
-| `duplex_metrics`     | Metrics to compute with [calc-duplex-metrics](https://github.com/WEHIGenomicsRnD/calculate-duplex-metrics). Comma-separated list of individual metrics (`frac_singletons`, `efficiency`, `drop_out_rate`) and/or groups (`gc`, `family`). Default: `all`. |
-| `variant_caller`     | Variant caller to use: `nvc` (naive variant caller) or `varscan`.                                                                                                                                                                                         |
-| `min_reads`          | Minimum reads supporting a consensus base (fgbio `FilterConsensusReads --min-reads`).                                                                                                                                                                     |
-| `FastqScreen_config` | Path to the FastQ Screen config file.                                                                                                                                                                                                                     |
-| `cluster_config`     | Path to the SLURM cluster config YAML (per-rule resource settings). Default: `config/cluster.yaml`. Use `config/cluster_bigmem.yaml` for high-memory nodes.                                                                                               |
-| `target_bed`         | For experiments with capture regions, you can provide a path in bed format to calculate the on-target rate for raw and duplex reads.                                                                                                                      |
-
-All other parameters are documented inline in `config/config.yaml`.
-
-### FastQ Screen Configuration
-
-Edit `config/fastq_screen.conf` to add the genomes you want to screen against.
-Each database entry must point to a pre-built **Bowtie2** index and be tagged
-with `BOWTIE2`:
-
-```
-DATABASE    Human    /path/to/indexes/Human/GRCh38/Homo_sapiens.GRCh38  BOWTIE2
-DATABASE    Mouse    /path/to/indexes/Mouse/GRCm38/Mus_musculus.GRCm38  BOWTIE2
-DATABASE    Ecoli    /path/to/indexes/Ecoli/Ecoli                       BOWTIE2
-```
-
-Bowtie2 indexes can be built with:
-
-```bash
-bowtie2-build ref/your_reference.fasta /path/to/indexes/your_reference
-```
-
-## Running
-
-You may be preferable to first run the pipeline to generate all the required conda environments:
-
-```bash
-snakemake --use-conda --conda-create-envs-only --cores 1
-```
-
-These may be a source of errors when running the pipeline, so a running this
-first can help to make sure all envs are created successfully.
-
-**Locally:**
-
-```bash
 conda activate snakemake
 snakemake --use-conda --conda-frontend mamba --cores 4
 ```
 
-**On a SLURM cluster:**
-
-```bash
-conda activate snakemake
-snakemake --use-conda --conda-frontend mamba --profile slurm --jobs 8 --cores 24
-```
-
-## Outputs
-
-All results are written under `results/`. The most relevant outputs are:
-
-| Path                                                              | Description                                                                                                                                                                                        |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `results/QC/multiQC/multiqc_report.html`                          | MultiQC report for pre-consensus reads, including FastQC and FastQ Screen metrics.                                                                                                                 |
-| `results/QC/consensus/multiQC/multiqc_report.html`                | MultiQC report for post-consensus reads, including duplex-specific metrics from `results/QC/duplex_metrics/` via the [`duplex-multiqc`](https://github.com/WEHIGenomicsRnD/duplex-multiqc) plugin. |
-| `results/QC/duplex_metrics/{sample}_metrics.csv`                  | Duplex metrics (efficiency, family statistics, GC bias, etc.) computed by [calc-duplex-metrics](https://github.com/WEHIGenomicsRnD/calculate-duplex-metrics).                                      |
-| `results/consensus/{sample}_consensus_mapped_merged_filtered.bam` | Final duplex consensus read alignments (mapped, merged, and filtered).                                                                                                                             |
-| `results/variants/{sample}_filtered.vcf`                          | Filtered variant calls.                                                                                                                                                                            |
+The Nextflow pipeline gives the same alignments; the differences in the other results and the changed defaults are listed
+in the [changelog](CHANGELOG.md), and [`tests/parity`](tests/parity/README.md) compares the two on the test data.

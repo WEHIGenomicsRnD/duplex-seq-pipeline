@@ -12,7 +12,7 @@ The results of the run on the test data are below (also in the notes of `CHANGEL
 
 ## How the run was set up
 
-1. Extract the Snakemake pipeline of the tag: `git archive 0.1.0 | tar -x -C snakemake_0.1.0`.
+1. Extract the Snakemake pipeline of the tag (it is no longer in this branch): `git archive 0.1.0 | tar -x -C snakemake_0.1.0`.
 2. Give it the same input. Snakemake takes the sample name from the FASTQ file name before `_R1`, so link the test FASTQ
    files as `fastq/NanoMB1Rep1_R1.fastq.gz` and `_R2` (the Nextflow samplesheet calls the sample `NanoMB1Rep1`). Use the
    decompressed `tests/data` reference (`ref:` in `config/config.yaml`), build its bwa index with the bwa of the

@@ -527,7 +527,7 @@ Done on the test data (see "Parity with 0.1.0" in `CHANGELOG.md`; script and set
 
 **Outstanding**
 
-1. **Remove the Snakemake code** and make the docs point to release `0.1.0` as the legacy version (planned next; see the discussion: tag, not a branch; check CI, pre-commit and `.gitignore` references; rewrite the README sections; keep `tests/parity` and `bin/filter_vcf.py`; check `config/fastq_screen.conf` is unused).
+1. ~~Remove the Snakemake code~~ **Done:** `workflow/`, `config/`, `slurm/` and `dag.pdf` are removed, the README describes only the Nextflow pipeline plus a short "Legacy Snakemake version" section (clone `--branch 0.1.0` and run), and the changelog says so. The tag `0.1.0` is the only copy (no branch).
 2. **First run of the CI workflows on GitHub:** docker, GHCR image visibility (calculate-duplex-metrics, duplex-multiqc), Wave images under docker, disk space, and the FastQ Screen database build. Never run there.
 3. **Release steps:** `manifest.version` is `0.2.0dev`; tag `0.2.0`, PR into `main`, release notes (mention that `main` no longer contains Snakemake once item 1 is done).
 4. **Variant-calling test with real variants:** the test data has none, so multi-allelic and DP paths only run on synthetic records.
@@ -536,5 +536,5 @@ Done on the test data (see "Parity with 0.1.0" in `CHANGELOG.md`; script and set
 7. **Re-run a real sample** with the compression patch and the new MultiQC names to confirm sizes and the report (the test data run is fine).
 8. **Qualimap in MultiQC:** Qualimap is off by default (`run_qualimap = false`, as in Snakemake), which is why the user's report has no Qualimap section; the grouping rules for its names (`<sample>_mapped`) are untested; try one run with `--run_qualimap`.
 9. **Plugin repo smoke test** (user's job, in the duplex-multiqc repo; draft step above).
-10. **Sandbox/local clean-up:** about 3.6 GB of unused images in `my_singularity_cache`; `containers.md` is local only and to be moved into the shared cache when the pipeline goes live; `nextflow_dag.*` and `dag.pdf` handling (`dag.pdf` is a Snakemake file, remove with item 1).
+10. **Sandbox/local clean-up:** about 3.6 GB of unused images in `my_singularity_cache`; `containers.md` is local only and to be moved into the shared cache when the pipeline goes live; `nextflow_dag.*` and `dag.pdf` handling (`dag.pdf` was removed with the Snakemake code).
 11. **Upstream:** the `--compression=0` default of the nf-core module could be reported or fixed there, after which the patch can be dropped. `--fastq_screen_conf` was considered and scrapped to stay idiomatic with the nf-core module.
