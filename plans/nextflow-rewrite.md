@@ -543,3 +543,29 @@ Done on the test data (see "Parity with 0.1.0" in `CHANGELOG.md`; script and set
 9. **Plugin repo smoke test** (user's job, in the duplex-multiqc repo; draft step above).
 10. **Sandbox/local clean-up:** about 3.6 GB of unused images in `my_singularity_cache`; `containers.md` is local only and to be moved into the shared cache when the pipeline goes live; `nextflow_dag.*` and `dag.pdf` handling (`dag.pdf` was removed with the Snakemake code).
 11. **Upstream:** the `--compression=0` default of the nf-core module could be reported or fixed there, after which the patch can be dropped. `--fastq_screen_conf` was considered and scrapped to stay idiomatic with the nf-core module.
+
+## Review (branch against `main`, logic and features)
+
+A read-through of the whole branch against the Snakemake rules of 0.1.0; no tests were run. The step order, the meta joins, the per-sample read structures and UMI files and the reference handling are as intended, and most differences from 0.1.0 are the documented ones (fgbio 3, `--DUPLEX_UMI`, varscan dropped, read groups).
+
+### Should fix
+
+1. ~~**fgbio memory is stuck at 8 GB.**~~ **Fixed.** The nf-core fgbio modules start from `mem_gb = 8` and only lower it, so `GroupReadsByUmi`, `CallDuplexConsensusReads` and `FilterConsensusReads` ran with `-Xmx8g` although `conf/base.config` reserves 64 GB for `FGBIO_.*`. On real data this is a likely out-of-memory failure (GroupReadsByUmi re-sorts the BAM), and a retry does not help (a Java OOM exits 1, which is not retried, and the heap does not grow with `task.attempt`). The heap is now 90% of `task.memory`, as in the local fgbio modules. Done as patches of the three modules (`fgbio-<module>.diff`, listed in `modules.json`; the `filterconsensusreads` patch also carries the compression change). Not re-run on a real sample.
+
+### Worth considering
+
+2. **Lanes from different runs cannot be merged.** `sortLanes` rejects a repeated lane number, so top-ups from a second run (run A `L001`, run B `L001`) cannot use `--merge_lanes`; files without a lane (`*_R1_001.fastq.gz`) are rejected too. Lane order only matters for reproducible output: keep the lane number as the sort key, allow repeats, and fall back to samplesheet row order.
+3. **Per-sample read structure, but global UMI tags.** `molecular_index_tags`, `single_tag` and `--markdup_duplex_umi` apply to the whole run, so a run that mixes duplex samples with single-UMI samples (`8M143T +T`) fails (ExtractUmisFromBam needs one tag per UMI segment; `--DUPLEX_UMI` needs `RX` as `X-Y`). Document that the two cannot be mixed, or derive these from `meta.read_structure`.
+4. **Hard-coded UMI tags (also in 0.1.0).** `--BARCODE_TAG RX` (MarkDuplicates, `conf/modules.config`) and `ZA`/`ZB`/`RX` in `bin/get_read_info.py` ignore `params.single_tag` and `params.molecular_index_tags`, so changing those parameters quietly breaks MarkDuplicates and the read info table.
+5. **UMI correction reaches only one strand of the read info table (also in 0.1.0).** CorrectUmis rewrites only `RX`; `get_read_info.py` takes the `+` strand UMI from `RX` (corrected) and the `-` strand UMI from `ZB-ZA` (uncorrected), so with a UMI file and `--output_read_info` the two strands of a molecule can fail to pair. Build the `-` UMI by swapping the halves of `RX` instead.
+6. **A supplied `--dict` must be named after the FASTA.** MergeBamAlignment and fgbio look for `<fasta basename>.dict` next to the FASTA; `--dict genome_v2.dict` is staged under its own name and the run fails late. Rename it when staging, or check at start-up.
+
+### Minor
+
+- `--strict` on MultiQC turns any warning, including ones from a user's `--multiqc_config`, into a failure; the duplex-section check in `QC` already covers the missing plugin.
+- `extra_fn_clean_exts` (`_merged.*$`) cuts short any sample whose own name contains `_merged`.
+- `ch_fasta_fai` in `workflows/duplexseq.nf` is first the user's `.fai` channel and later the `[meta, fasta, fai]` bundle; use a separate name.
+- Not published: the CorrectUmis metrics (`--metrics`) and the unmapped UMI BAMs (`results/unmapped_bams` in 0.1.0). Fine if intended; say so in the CHANGELOG.
+- `CALC_DUPLEX_METRICS` fails under `-profile conda` (the package is not in the environment) and reports its version as `null` (taken from the container tag). Snakemake installed the package at run time; the README could say the container is the supported route.
+- `CallDuplexConsensusReads` runs on 1 CPU although it is multithreaded (`--threads ${task.cpus}`); more CPUs are an easy speed-up.
+- With `--validate_params false` and no `--fasta` the run fails with a NullPointerException at `params.fasta.replaceFirst` instead of a clear error.

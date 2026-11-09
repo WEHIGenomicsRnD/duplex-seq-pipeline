@@ -70,6 +70,9 @@ Compared with the Snakemake pipeline (0.1.0):
   see the notes below), samtools stats, flagstat and Qualimap read the duplicate-marked BAM, only the MarkDuplicates
   metrics are published (not the marked BAM), and the duplex metrics are named after the sample (`--sample`), so they
   merge into the sample's row in MultiQC.
+- **fgbio memory:** the nf-core fgbio modules cap the Java heap at 8 GB however much memory the task has (they only lower
+  it). `GroupReadsByUmi`, `CallDuplexConsensusReads` and `FilterConsensusReads` are patched (`modules.json`) to use 90% of
+  the task memory, as the local fgbio modules do, so the 64 GB reserved in `conf/base.config` is used as in 0.1.0.
 - **Parameters** keep their Snakemake names and defaults, except `ref` (now `--fasta`), `FastqScreen_config` (now
   `--fastq_screen_db`, a database folder in the `FastQ_Screen_Genomes` layout of `fastq_screen --get_genomes`, because
   the nf-core module stages a whole folder) and `cluster_config` (replaced by Nextflow profiles and resources). New
