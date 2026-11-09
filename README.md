@@ -41,14 +41,34 @@ builds containers on demand). The `conda` and `mamba` profiles cannot run the du
 calc-duplex-metrics is not on conda and only comes as a container
 (`ghcr.io/wehigenomicsrnd/calculate-duplex-metrics`). Run `nextflow run . --help` for all parameters.
 
-The samplesheet is a CSV with columns `sample,fastq_1,fastq_2` and the optional
-columns `read_structure` and `umi_file`, which override `--read_structure` and
-`--umis` for that sample. Relative paths are resolved against the folder of the samplesheet:
+The samplesheet is a CSV with the columns below. Leave a cell empty to use the default; do not write `null` or `NA`, which
+would be read as a file name. Relative paths are resolved against the folder of the samplesheet.
+
+| Column           | Required | Description                                                                                                |
+| ---------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
+| `sample`         | yes      | Sample name, without spaces.                                                                               |
+| `fastq_1`        | yes      | FASTQ file of read 1 (`.fastq.gz` or `.fq.gz`).                                                            |
+| `fastq_2`        | yes      | FASTQ file of read 2.                                                                                      |
+| `read_structure` | no       | fgbio read structure of this sample, one per read (e.g. `3M2S146T 3M2S146T`). Default: `--read_structure`. |
+| `umi_file`       | no       | File of known UMIs; the UMIs of this sample are corrected against it. Default: `--umis`, or no correction. |
 
 ```csv
 sample,fastq_1,fastq_2
 NanoMB1Rep1,NanoMB1Rep1_R1.fastq.gz,NanoMB1Rep1_R2.fastq.gz
 ```
+
+Read structures and UMI correction are decided per sample, so one run can mix kits. In the example below the first sample is
+corrected against `umis.txt` and the second is not corrected and has another read structure:
+
+```csv
+sample,fastq_1,fastq_2,read_structure,umi_file
+A,A_R1.fastq.gz,A_R2.fastq.gz,3M2S146T 3M2S146T,umis.txt
+B,B_R1.fastq.gz,B_R2.fastq.gz,3M2S+T 3M2S+T,
+```
+
+A sample is corrected when it has a `umi_file` or, if that cell is empty, when `--umis` is given. An empty cell cannot switch
+off a global `--umis`, so for a run in which only some samples are corrected, do not set `--umis` and give the `umi_file` to
+those samples.
 
 If a sample was sequenced on several lanes, give every lane its own row with the same sample name and use `--merge_lanes`.
 The files of the lanes are then concatenated, in lane order, into one pair of FASTQ files per sample before anything else

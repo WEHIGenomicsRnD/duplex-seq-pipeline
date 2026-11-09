@@ -521,19 +521,24 @@ Done on the test data (see "Parity with 0.1.0" in `CHANGELOG.md`; script and set
 
 - `nf-schema` 2.5.1 gave `Unrecognized config option 'validation.*'` warnings on Nextflow 26.04; 2.7.2 does not (stub runs on 26.04.3 and 25.10.0). nf-schema 2.7.2 needs Nextflow >= 25.10.0, so `manifest.nextflowVersion` is now `!>=25.10.0` (README updated; CI already uses 25.10.0).
 
+## Per-sample read structure and UMI correction
+
+- Asked for as a new feature; the samplesheet already had optional `read_structure` and `umi_file` columns, which is enough: a sample is corrected when it has a `umi_file` (or, with an empty cell, when `--umis` is given), and each sample uses its own `read_structure` (else `--read_structure`). No `correct_umis` column was added. Known limitation: an empty `umi_file` cannot switch off a global `--umis`, so mixed runs should not set `--umis`.
+- Added: README table of the samplesheet columns with a mixed example and that note, and `tests/umis.nf.test` (`tests/data/samplesheet_umis.csv`, `tests/data/umis.txt`): two samples, different read structures (`3M2S146T 3M2S146T` and `3M2S+T 3M2S+T`), only the first with a UMI file; asserts `FGBIO_CORRECTUMIS` ran for that sample only. Result: see the commit.
+
 ## Status and outstanding items
 
-**Implemented and committed (branch `nextflow-rewrite`, nothing pushed):** scaffold and params; all preprocessing, consensus, variant-calling (nvc only) and QC subworkflows; one MultiQC report with the duplex plugin; optional lane merging; nf-tests (default, read info, per-strand marking, FastQ Screen, four lane tests); CI workflows (`nf-test.yml`, `lint.yml`, main/dev only); `meta.yml` for the local modules; README, `CHANGELOG.md`, parity script and results.
+**Implemented and committed (branch `nextflow-rewrite`, nothing pushed):** scaffold and params; all preprocessing, consensus, variant-calling (nvc only) and QC subworkflows; one MultiQC report with the duplex plugin; optional lane merging; Snakemake code removed; per-sample read structure and UMI correction documented and tested; nf-tests (default, read info, per-strand marking, FastQ Screen, four lane tests); CI workflows (`nf-test.yml`, `lint.yml`, main/dev only); `meta.yml` for the local modules; README, `CHANGELOG.md`, parity script and results.
 
 **Outstanding**
 
 1. ~~Remove the Snakemake code~~ **Done:** `workflow/`, `config/`, `slurm/` and `dag.pdf` are removed, the README describes only the Nextflow pipeline plus a short "Legacy Snakemake version" section (clone `--branch 0.1.0` and run), and the changelog says so. The tag `0.1.0` is the only copy (no branch).
 2. **First run of the CI workflows on GitHub:** docker, GHCR image visibility (calculate-duplex-metrics, duplex-multiqc), Wave images under docker, disk space, and the FastQ Screen database build. Never run there.
 3. **Release steps:** `manifest.version` is `0.2.0dev`; tag `0.2.0`, PR into `main`, release notes (mention that `main` no longer contains Snakemake once item 1 is done).
-4. **Variant-calling test with real variants:** the test data has none, so multi-allelic and DP paths only run on synthetic records.
+4. **Variant-calling test with real variants:** the test data has none, so multi-allelic and DP paths only run on synthetic records. The user checked one real sample against the Snakemake results: every variant called before is called again, and a few extra variants appear that 0.1.0 dropped from the filtered VCF because of N alleles (they now have a real base change). Further validation is the user's; a committed test with real variants is still open.
 5. **`meta.yml` for the local subworkflows** (optional).
 6. **`MQ` tag on 21 supplementary records:** seen in the parity run, not isolated.
-7. **Re-run a real sample** with the compression patch and the new MultiQC names to confirm sizes and the report (the test data run is fine).
+7. **Re-run a real sample** with the compression patch to confirm the size of `*_filtered.bam` (the MultiQC sample grouping is confirmed by the user on a real report; the test data run is fine).
 8. **Qualimap in MultiQC:** Qualimap is off by default (`run_qualimap = false`, as in Snakemake), which is why the user's report has no Qualimap section; the grouping rules for its names (`<sample>_mapped`) are untested; try one run with `--run_qualimap`.
 9. **Plugin repo smoke test** (user's job, in the duplex-multiqc repo; draft step above).
 10. **Sandbox/local clean-up:** about 3.6 GB of unused images in `my_singularity_cache`; `containers.md` is local only and to be moved into the shared cache when the pipeline goes live; `nextflow_dag.*` and `dag.pdf` handling (`dag.pdf` was removed with the Snakemake code).

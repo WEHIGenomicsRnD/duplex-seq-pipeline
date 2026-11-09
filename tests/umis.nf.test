@@ -1,0 +1,30 @@
+nextflow_pipeline {
+
+    name "Test per-sample read structures and UMI correction"
+    script "main.nf"
+
+    test("Samples with different read structures, one corrected against a UMI file") {
+
+        tag "umis"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input = "${projectDir}/tests/data/samplesheet_umis.csv"
+            }
+        }
+
+        then {
+            assert workflow.success
+
+            // UMI correction runs only for the sample with a umi_file, UMI extraction for both
+            def tasks = { process -> workflow.trace.tasks().findAll { it.name.contains(":${process} (") }*.name }
+            assert tasks("FGBIO_CORRECTUMIS") == ["DUPLEXSEQ:FASTQ_ALIGN_UMI:FGBIO_CORRECTUMIS (NanoMB1Rep1)"]
+            assert tasks("FGBIO_EXTRACTUMISFROMBAM").size() == 2
+
+            // each sample gets its own result
+            assert new File("$outputDir/mapped_bams/NanoMB1Rep1_mapped_merged.bam").exists()
+            assert new File("$outputDir/mapped_bams/NanoMB1Rep2_mapped_merged.bam").exists()
+        }
+    }
+}
