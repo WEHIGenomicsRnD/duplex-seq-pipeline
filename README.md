@@ -22,7 +22,8 @@ same alignments, and the remaining differences were traced to tool versions, mai
 4. **Variants:** overlapping read pairs of the filtered consensus reads are clipped (fgbio ClipBam), variants are called with
    the naive variant caller (nvc) and the VCF is filtered.
 5. **QC:** FastQC, FastQ Screen (when a database is given), Picard MarkDuplicates (per duplex molecule), samtools stats and
-   flagstat, Qualimap (`--run_qualimap`) and the duplex metrics of
+   flagstat, Qualimap (`--run_qualimap`), the coverage of the duplex reads (mosdepth, on the clipped consensus BAM) and the
+   duplex metrics of
    [calc-duplex-metrics](https://github.com/WEHIGenomicsRnD/calculate-duplex-metrics), all in a single MultiQC report that
    includes the duplex metrics (via the [duplex-multiqc](https://github.com/WEHIGenomicsRnD/duplex-multiqc) plugin).
 
@@ -118,16 +119,16 @@ config of the folder is the one used, so keep one folder per set of genomes.
 
 ## Outputs
 
-| Directory         | Content                                                                                                                                                                               |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `reference/`      | The indexes that were built (`.fai`, `.dict`, `bwa/`).                                                                                                                                |
-| `mapped_bams/`    | `<sample>_mapped_merged.bam`: the aligned BAM with the UMI tags.                                                                                                                      |
-| `grouped_by_umi/` | The BAM grouped by UMI and the family size histogram.                                                                                                                                 |
-| `consensus/`      | The duplex consensus reads: unmapped, mapped, filtered (`_filtered.bam`) and clipped for variant calling (`_filtered_clipped.bam`).                                                   |
-| `variants/`       | `<sample>.vcf` from nvc and `<sample>_filtered.vcf`.                                                                                                                                  |
-| `QC/`             | FastQC, FastQ Screen, MarkDuplicates metrics, samtools, Qualimap, `duplex_metrics/` and, with `--output_read_info`, `read_info/`. The consensus reads have their own `QC/consensus/`. |
-| `QC/multiqc/`     | The MultiQC report (`multiqc_report.html`).                                                                                                                                           |
-| `pipeline_info/`  | Tool versions (`software_versions.yml`), the execution report, timeline, trace and DAG.                                                                                               |
+| Directory         | Content                                                                                                                                                                                                                           |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `reference/`      | The indexes that were built (`.fai`, `.dict`, `bwa/`).                                                                                                                                                                            |
+| `mapped_bams/`    | `<sample>_mapped_merged.bam`: the aligned BAM with the UMI tags.                                                                                                                                                                  |
+| `grouped_by_umi/` | The BAM grouped by UMI and the family size histogram.                                                                                                                                                                             |
+| `consensus/`      | The duplex consensus reads: unmapped, mapped, filtered (`_filtered.bam`) and clipped for variant calling (`_filtered_clipped.bam`).                                                                                               |
+| `variants/`       | `<sample>.vcf` from nvc and `<sample>_filtered.vcf`.                                                                                                                                                                              |
+| `QC/`             | FastQC, FastQ Screen, MarkDuplicates metrics, samtools, Qualimap, `mosdepth/` (coverage of the duplex reads), `duplex_metrics/` and, with `--output_read_info`, `read_info/`. The consensus reads have their own `QC/consensus/`. |
+| `QC/multiqc/`     | The MultiQC report (`multiqc_report.html`).                                                                                                                                                                                       |
+| `pipeline_info/`  | Tool versions (`software_versions.yml`), the execution report, timeline, trace and DAG.                                                                                                                                           |
 
 ## Development
 

@@ -46,6 +46,12 @@ the legacy version. The rewrite plan is in [`plans/nextflow-rewrite.md`](plans/n
   into one pair of FASTQ files per sample (nf-core `CAT_FASTQ`, in the subworkflow `MERGE_LANES`). The lane is read from file
   names such as `_L001_R1.fastq.gz`, and the rows are checked before anything runs. Without the option a repeated sample
   name is still an error, but the check is now made at start-up and no longer by the samplesheet schema.
+- **Coverage of the duplex reads:** mosdepth (nf-core module `MOSDEPTH`) runs on
+  the clipped duplex consensus BAM, whose overlapping read pairs are hard-clipped so that a base covered by both mates is
+  counted once. With `--target_bed` the coverage is also summarised per target region. The results are in `QC/mosdepth` and in
+  the MultiQC report (mean coverage in the sample's "Consensus BAM" fold-out, the coverage distribution plots). Per-base
+  coverage is not written (`--no-per-base`) and the mapping quality cut-off is `--min_mapq`, as for nvc; both can be changed
+  with `ext.args` in `conf/modules.config`.
 - `--markdup_duplex_umi` (on by default): MarkDuplicates marks duplicates per duplex molecule (`--DUPLEX_UMI true`); turn it
   off for single-UMI read structures or to reproduce the per-strand marking of 0.1.0.
 - `meta.yml` for the local modules, in the nf-core format (checked against the nf-core module meta schema).

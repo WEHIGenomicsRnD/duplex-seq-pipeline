@@ -1,6 +1,7 @@
 //
 // QC: FastQC, FastQ Screen, MarkDuplicates metrics, samtools stats/flagstat, Qualimap, the optional
-// read info table and the duplex metrics on the mapped and consensus BAMs, summarised in a single MultiQC report.
+// read info table and the duplex metrics on the mapped and consensus BAMs, and mosdepth coverage of the clipped
+// duplex BAM, summarised in a single MultiQC report.
 // Consensus outputs get a `_consensus` prefix so they are separate samples in MultiQC.
 //
 
@@ -13,6 +14,7 @@ include { QUALIMAP_BAMQC } from '../../../modules/nf-core/qualimap/bamqc/main'
 include { SAMTOOLS_STATS as SAMTOOLS_STATS_CONSENSUS } from '../../../modules/nf-core/samtools/stats/main'
 include { SAMTOOLS_FLAGSTAT as SAMTOOLS_FLAGSTAT_CONSENSUS } from '../../../modules/nf-core/samtools/flagstat/main'
 include { QUALIMAP_BAMQC as QUALIMAP_BAMQC_CONSENSUS } from '../../../modules/nf-core/qualimap/bamqc/main'
+include { MOSDEPTH } from '../../../modules/nf-core/mosdepth/main'
 include { GET_READ_INFO } from '../../../modules/local/getreadinfo/main'
 include { CALC_DUPLEX_METRICS } from '../../../modules/local/calcduplexmetrics/main'
 include { MULTIQC } from '../../../modules/nf-core/multiqc/main'
@@ -22,6 +24,7 @@ workflow QC {
     reads // channel: [ val(meta), [ path(fastq_1), path(fastq_2) ] ]
     bam_bai // channel: [ val(meta), path(bam), path(bai) ] mapped, UMI-tagged BAM
     consensus_bam_bai // channel: [ val(meta), path(bam), path(bai) ] filtered consensus BAM
+    duplex_bam_bai // channel: [ val(meta), path(bam), path(bai) ] clipped (overlapping read pairs hard-clipped) consensus BAM
     fasta_fai // channel: [ val(meta), path(fasta), path(fai) ]
     target_bed // value: path(bed) or [] (enables the on-target duplex metrics)
     fastq_screen_db // channel: path(dir with fastq_screen.conf), or empty to skip FastQ Screen
@@ -69,6 +72,10 @@ workflow QC {
     SAMTOOLS_STATS_CONSENSUS(consensus_bam_bai, fasta_fai)
     SAMTOOLS_FLAGSTAT_CONSENSUS(consensus_bam_bai)
 
+    // coverage of the duplex reads: the clipped BAM, so that the two mates of a pair are not counted twice where they overlap
+    // (with a target BED file the coverage is also summarised per region; a BAM needs no reference FASTA)
+    MOSDEPTH(duplex_bam_bai.map { meta, bam, bai -> [meta, bam, bai, target_bed] }, [[:], []], [])
+
     ch_multiqc_files = ch_multiqc_files
         .mix(FASTQC.out.zip.map { _meta, f -> f })
         .mix(FASTQSCREEN.out.txt.map { _meta, f -> f })
@@ -78,6 +85,9 @@ workflow QC {
         .mix(CALC_DUPLEX_METRICS.out.csv.map { _meta, f -> f })
         .mix(SAMTOOLS_STATS_CONSENSUS.out.stats.map { _meta, f -> f })
         .mix(SAMTOOLS_FLAGSTAT_CONSENSUS.out.flagstat.map { _meta, f -> f })
+        .mix(MOSDEPTH.out.global_txt.map { _meta, f -> f })
+        .mix(MOSDEPTH.out.summary_txt.map { _meta, f -> f })
+        .mix(MOSDEPTH.out.regions_txt.map { _meta, f -> f })
 
     // Qualimap is resource-intensive, so it is opt-in (--run_qualimap)
     if (run_qualimap) {

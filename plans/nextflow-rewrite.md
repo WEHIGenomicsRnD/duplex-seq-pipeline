@@ -544,6 +544,11 @@ Done on the test data (see "Parity with 0.1.0" in `CHANGELOG.md`; script and set
 10. **Sandbox/local clean-up:** about 3.6 GB of unused images in `my_singularity_cache`; `containers.md` is local only and to be moved into the shared cache when the pipeline goes live; `nextflow_dag.*` and `dag.pdf` handling (`dag.pdf` was removed with the Snakemake code).
 11. **Upstream:** the `--compression=0` default of the nf-core module could be reported or fixed there, after which the patch can be dropped. `--fastq_screen_conf` was considered and scrapped to stay idiomatic with the nf-core module.
 
+## mosdepth coverage of the duplex BAM
+
+- nf-core module `mosdepth` (`nf-core modules install mosdepth`, same sha as the other modules; its container is the module's own, mosdepth 0.3.14 with gzip, not `quay.io/biocontainers/mosdepth:0.3.3--h37c5b7d_2`; `conf/base.config` gives it 2 CPUs and 6 GB instead of `process_medium`). Runs in `QC` on `VARIANT_CALLING.out.clipped_bam_bai` (post-ClipBam), with `--target_bed` as `--by` when given; `--no-per-base --mapq ${params.min_mapq}` in `conf/modules.config`; prefix `<sample>_consensus`, so MultiQC folds it into the "Consensus BAM" fold-out. `.mosdepth` is truncated from the sample names in `assets/multiqc_config.yml`. Published in `QC/mosdepth`.
+- **Run with nf-test (Nextflow 25.10):** the default test passes with the new assertions, so the container pull, the new output files and the `multiqc_general_stats.txt` header check work, and the MultiQC row count stays at 6. Still unchecked by eye: (1) the sample names in the MultiQC mosdepth sections (`NanoMB1Rep1_consensus`), (2) `--strict` with a mosdepth warning.
+
 ## Review (branch against `main`, logic and features)
 
 A read-through of the whole branch against the Snakemake rules of 0.1.0; no tests were run. The step order, the meta joins, the per-sample read structures and UMI files and the reference handling are as intended, and most differences from 0.1.0 are the documented ones (fgbio 3, `--DUPLEX_UMI`, varscan dropped, read groups).

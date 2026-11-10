@@ -107,6 +107,7 @@ workflow DUPLEXSEQ {
         ch_reads,
         FASTQ_ALIGN_UMI.out.bam_bai,
         CONSENSUS.out.filtered_bam_bai,
+        VARIANT_CALLING.out.clipped_bam_bai,
         ch_fasta_fai,
         ch_target_bed,
         ch_fastq_screen_db,
