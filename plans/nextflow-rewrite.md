@@ -572,5 +572,5 @@ A read-through of the whole branch against the Snakemake rules of 0.1.0; no test
 - `ch_fasta_fai` in `workflows/duplexseq.nf` is first the user's `.fai` channel and later the `[meta, fasta, fai]` bundle; use a separate name.
 - Not published: the CorrectUmis metrics (`--metrics`) and the unmapped UMI BAMs (`results/unmapped_bams` in 0.1.0). Fine if intended; say so in the CHANGELOG.
 - `CALC_DUPLEX_METRICS` fails under `-profile conda` (the package is not in the environment) and reports its version as `null` (taken from the container tag). Snakemake installed the package at run time; the README could say the container is the supported route.
-- `CallDuplexConsensusReads` runs on 1 CPU although it is multithreaded (`--threads ${task.cpus}`); more CPUs are an easy speed-up.
+- ~~`CallDuplexConsensusReads` runs on 1 CPU although it is multithreaded~~ **Done:** 4 CPUs in `conf/base.config` (`--threads ${task.cpus}`); memory and time are unchanged.
 - With `--validate_params false` and no `--fasta` the run fails with a NullPointerException at `params.fasta.replaceFirst` instead of a clear error.
