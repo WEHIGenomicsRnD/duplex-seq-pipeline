@@ -574,3 +574,12 @@ A read-through of the whole branch against the Snakemake rules of 0.1.0; no test
 - `CALC_DUPLEX_METRICS` fails under `-profile conda` (the package is not in the environment) and reports its version as `null` (taken from the container tag). Snakemake installed the package at run time; the README could say the container is the supported route.
 - ~~`CallDuplexConsensusReads` runs on 1 CPU although it is multithreaded~~ **Done:** 4 CPUs in `conf/base.config` (`--threads ${task.cpus}`); memory and time are unchanged.
 - With `--validate_params false` and no `--fasta` the run fails with a NullPointerException at `params.fasta.replaceFirst` instead of a clear error.
+
+## Resource review and possible speedups (execution report, large and small samples)
+Resource allocation in `conf/base.config` was right-sized from the peak RSS and CPU use in an execution report: over-requested memory trimmed, `CALC_DUPLEX_METRICS` reduced to 4 CPUs, and 2 CPUs for `GATK4_SAMTOFASTQ` and `GATK4_MERGEBAMALIGNMENT`. The main bottleneck is not allocation but single-threaded steps that each rewrite a whole BAM (80-200 GB for the largest samples).
+
+Not implemented, noted for later:
+- **Streaming the unmapped-BAM prep**: fuse `PICARD_FASTQTOSAM`, `FGBIO_EXTRACTUMISFROMBAM` and `FGBIO_CORRECTUMIS` into one piped step, removing two full BAM rewrites (about 800 min per large sample).
+- **Piping `GATK4_SAMTOFASTQ` into `BWA_MEM`**: removes about 106 min and an ~80 GB intermediate for large samples.
+- **More CPUs for `BWA_MEM`**: it uses ~1590% of its 16 CPUs, so scaling is near-linear; 24-32 CPUs could cut the longest large-sample alignment from ~7 h to ~4-5 h where nodes allow.
+- Scattering by lane is not considered, as samples do not always have multiple lanes.
