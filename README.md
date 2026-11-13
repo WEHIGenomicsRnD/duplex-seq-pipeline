@@ -7,7 +7,7 @@ duplex consensus reads, variant calls, and QC metrics. The workflow follows the
 IDT recommended approach for [processing sequence data with unique molecular
 identifiers](https://plone.bcgsc.ca/services/solseq/duplex-umi-documents/idt_analysisguideline_varcall-umis-dupseqadapters/).
 
-This is the Nextflow rewrite of the pipeline (release 0.2.0, not released yet). It runs the same analysis as the original
+This is the Nextflow rewrite of the pipeline (release 0.2.0). It runs the same analysis as the original
 [Snakemake version](#legacy-snakemake-version) (release 0.1.0) with containers or conda. On the test data both give the
 same alignments, and the remaining differences were traced to tool versions, mainly fgbio 3 against fgbio 1.4.0: see
 [`tests/parity`](tests/parity/README.md) and the [changelog](CHANGELOG.md).

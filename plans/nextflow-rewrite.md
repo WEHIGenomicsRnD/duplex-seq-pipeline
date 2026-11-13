@@ -493,7 +493,7 @@ The Claude sandbox job now has a 16 GB memory limit (it was 8 GB earlier in the 
 
 - `SAMTOOLS_STATS`, `SAMTOOLS_FLAGSTAT` and `QUALIMAP_BAMQC` (mapped sample) now read the BAM written by `PICARD_MARKDUPLICATES` (no index needed); the consensus statistics, the duplex metrics and the consensus path keep the unmarked BAM. The nf-test checks that the flagstat duplicate count equals Picard's. Analysis, numbers and consequences are in `CHANGELOG.md`.
 - `--markdup_duplex_umi` (default true) passes `--DUPLEX_UMI true` to MarkDuplicates, so duplicates are marked per duplex molecule (unique pairs 5,296 against 7,600 per strand, close to the 5,565 molecule-level families of `calc-duplex-metrics`). Picard stops if an `RX` tag is not two equal-length UMIs joined by a hyphen, so single-UMI read structures need `--markdup_duplex_umi false`, which also reproduces the Snakemake (per-strand) marking. Three nf-test tests cover the default, the read info table and the switch.
-- `CHANGELOG.md` is new: 0.1.0 is the Snakemake pipeline (tag `0.1.0`), 0.2.0 the unreleased Nextflow rewrite (`manifest.version` is `0.2.0dev`).
+- `CHANGELOG.md` is new: 0.1.0 is the Snakemake pipeline (tag `0.1.0`), 0.2.0 the Nextflow rewrite (`manifest.version` is `0.2.0`, released 2026-11-13).
 
 ## Parity run against Snakemake 0.1.0
 
@@ -534,7 +534,7 @@ Done on the test data (see "Parity with 0.1.0" in `CHANGELOG.md`; script and set
 
 1. ~~Remove the Snakemake code~~ **Done:** `workflow/`, `config/`, `slurm/` and `dag.pdf` are removed, the README describes only the Nextflow pipeline plus a short "Legacy Snakemake version" section (clone `--branch 0.1.0` and run), and the changelog says so. The tag `0.1.0` is the only copy (no branch).
 2. **First run of the CI workflows on GitHub:** docker, GHCR image visibility (calculate-duplex-metrics, duplex-multiqc), Wave images under docker, disk space, and the FastQ Screen database build. Never run there.
-3. **Release steps:** `manifest.version` is `0.2.0dev`; tag `0.2.0`, PR into `main`, release notes (mention that `main` no longer contains Snakemake once item 1 is done).
+3. ~~Release steps~~ **Prepared:** `manifest.version` is `0.2.0`, the changelog is dated, and the annotated tag `0.2.0` is on the release commit (local until pushed). Still to do by the user: push the tag, open the PR into `main`, GitHub release notes (mention that `main` no longer contains Snakemake, which stays at tag `0.1.0`).
 4. **Variant-calling test with real variants:** the test data has none, so multi-allelic and DP paths only run on synthetic records. The user checked one real sample against the Snakemake results: every variant called before is called again, and a few extra variants appear that 0.1.0 dropped from the filtered VCF because of N alleles (they now have a real base change). Further validation is the user's; a committed test with real variants is still open.
 5. **`meta.yml` for the local subworkflows** (optional).
 6. **`MQ` tag on 21 supplementary records:** seen in the parity run, not isolated.
@@ -576,9 +576,11 @@ A read-through of the whole branch against the Snakemake rules of 0.1.0; no test
 - With `--validate_params false` and no `--fasta` the run fails with a NullPointerException at `params.fasta.replaceFirst` instead of a clear error.
 
 ## Resource review and possible speedups (execution report, large and small samples)
+
 Resource allocation in `conf/base.config` was right-sized from the peak RSS and CPU use in an execution report: over-requested memory trimmed, `CALC_DUPLEX_METRICS` reduced to 4 CPUs, and 2 CPUs for `GATK4_SAMTOFASTQ` and `GATK4_MERGEBAMALIGNMENT`. The main bottleneck is not allocation but single-threaded steps that each rewrite a whole BAM (80-200 GB for the largest samples).
 
 Not implemented, noted for later:
+
 - **Streaming the unmapped-BAM prep**: fuse `PICARD_FASTQTOSAM`, `FGBIO_EXTRACTUMISFROMBAM` and `FGBIO_CORRECTUMIS` into one piped step, removing two full BAM rewrites (about 800 min per large sample).
 - **Piping `GATK4_SAMTOFASTQ` into `BWA_MEM`**: removes about 106 min and an ~80 GB intermediate for large samples.
 - **More CPUs for `BWA_MEM`**: it uses ~1590% of its 16 CPUs, so scaling is near-linear; 24-32 CPUs could cut the longest large-sample alignment from ~7 h to ~4-5 h where nodes allow.

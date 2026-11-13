@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.2.0] - Unreleased
+## [0.2.0] - 2026-11-13
 
 The Nextflow rewrite of the pipeline. The Snakemake pipeline (release 0.1.0) is no longer in the repository; it stays
 available at the tag `0.1.0` (`git clone --branch 0.1.0 https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline.git`) and is
@@ -61,6 +61,11 @@ the legacy version. The rewrite plan is in [`plans/nextflow-rewrite.md`](plans/n
 
 Compared with the Snakemake pipeline (0.1.0):
 
+- **Nextflow:** version 25.10.0 or later is required (nf-schema 2.7.2).
+- **QC output names:** FastQC files are named `<sample>_reads_{1,2}` and the samtools stats, flagstat and Qualimap files of
+  the mapped BAM `<sample>_mapped`, so that MultiQC can fold the rows of a sample into one expandable row.
+- **Filtered consensus BAM:** `FilterConsensusReads` writes a compressed BAM (module patch; the nf-core module wrote it
+  uncompressed, 1.2 GB against 98 MB for the unfiltered BAM on a real sample).
 - **Tool versions**, as installed by the Nextflow modules (Snakemake in brackets): fgbio 3.1.2 (1.4.0), Picard 3.5.0 and
   GATK 4.7.0.0 (Picard 2.27.4), bwa 0.7.19 (0.7.17), samtools 1.22.1 and 1.25 (1.14), FastQC 0.13.0 (0.11.8),
   FastQ Screen 0.16.0 (0.14.0), Qualimap 2.3 (2.2.2), MultiQC 1.35 (1.14), nvc 0.0.4 (same). Output can differ slightly
