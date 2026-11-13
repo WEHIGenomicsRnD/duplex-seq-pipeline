@@ -1,0 +1,125 @@
+{
+    "name": "WEHIGenomicsRnD/duplex-seq-pipeline",
+    "homePage": "https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline",
+    "repos": {
+        "https://github.com/nf-core/modules.git": {
+            "modules": {
+                "nf-core": {
+                    "bwa/index": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "bwa/mem": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "cat/fastq": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "fastqc": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "fastqscreen/fastqscreen": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "fgbio/callduplexconsensusreads": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/fgbio/callduplexconsensusreads/fgbio-callduplexconsensusreads.diff"
+                    },
+                    "fgbio/filterconsensusreads": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/fgbio/filterconsensusreads/fgbio-filterconsensusreads.diff"
+                    },
+                    "fgbio/groupreadsbyumi": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/fgbio/groupreadsbyumi/fgbio-groupreadsbyumi.diff"
+                    },
+                    "gatk4/mergebamalignment": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "gatk4/samtofastq": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "gunzip": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "mosdepth": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "multiqc": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "picard/createsequencedictionary": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "picard/fastqtosam": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "picard/markduplicates": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "picard/sortsam": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "qualimap/bamqc": {
+                        "branch": "master",
+                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/faidx": {
+                        "branch": "master",
+                        "git_sha": "a582d5633f7df32396681ef4458068e2b509ca91",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/flagstat": {
+                        "branch": "master",
+                        "git_sha": "a582d5633f7df32396681ef4458068e2b509ca91",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/index": {
+                        "branch": "master",
+                        "git_sha": "a582d5633f7df32396681ef4458068e2b509ca91",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/stats": {
+                        "branch": "master",
+                        "git_sha": "a582d5633f7df32396681ef4458068e2b509ca91",
+                        "installed_by": ["modules"]
+                    }
+                }
+            }
+        }
+    }
+}

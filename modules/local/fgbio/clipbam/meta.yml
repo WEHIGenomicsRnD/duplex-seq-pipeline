@@ -1,0 +1,90 @@
+name: fgbio_clipbam
+description: |
+  Clips the reads of a template: hard clipping and clipping of overlapping read pairs, so that a base is counted once.
+  The BAM file must be queryname sorted or query grouped (fgbio >= 2); the clipping mode and the sort order of the output
+  are set with `task.ext.args`.
+keywords:
+  - clip
+  - overlap
+  - fgbio
+  - bam
+tools:
+  - fgbio:
+      description: A set of tools for working with genomic and high throughput sequencing data, including UMIs
+      homepage: http://fulcrumgenomics.github.io/fgbio/
+      documentation: http://fulcrumgenomics.github.io/fgbio/tools/latest/
+      tool_dev_url: https://github.com/fulcrumgenomics/fgbio
+      licence: ["MIT"]
+      identifier: biotools:fgbio
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - bam:
+        type: file
+        description: BAM file, queryname sorted or query grouped
+        pattern: "*.bam"
+        ontologies:
+          - edam: "http://edamontology.org/format_2572"
+  - - meta2:
+        type: map
+        description: |
+          Groovy Map containing genome information
+          e.g. [ id:'test', single_end:false ]
+    - fasta:
+        type: file
+        description: Reference genome FASTA file
+        pattern: "*.{fa,fasta,fna}"
+        ontologies:
+          - edam: "http://edamontology.org/format_1929"
+    - fai:
+        type: file
+        description: FASTA index file
+        pattern: "*.fai"
+        ontologies: []
+    - dict:
+        type: file
+        description: FASTA sequence dictionary
+        pattern: "*.dict"
+        ontologies: []
+output:
+  bam:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*.bam":
+          type: file
+          description: Clipped BAM file
+          pattern: "*.bam"
+          ontologies:
+            - edam: "http://edamontology.org/format_2572"
+  versions_fgbio:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - fgbio:
+          type: string
+          description: The tool name
+      - 'fgbio --version 2>&1 | tr -d "[:cntrl:]" | sed -e "s/^.*Version: //;s/\[.*$//"':
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - fgbio:
+          type: string
+          description: The tool name
+      - 'fgbio --version 2>&1 | tr -d "[:cntrl:]" | sed -e "s/^.*Version: //;s/\[.*$//"':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mcmero"
+maintainers:
+  - "@mcmero"

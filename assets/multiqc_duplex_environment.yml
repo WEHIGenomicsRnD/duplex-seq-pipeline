@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::multiqc=1.35
+  - pip
+  - pip:
+      - git+https://github.com/WEHIGenomicsRnD/duplex-multiqc.git@0.1.1

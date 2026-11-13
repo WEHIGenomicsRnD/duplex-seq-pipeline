@@ -1,0 +1,88 @@
+name: nvc
+description: |
+  Calls variants from a BAM file with the naive variant caller (nvc), which writes the nucleotide counts (NC) of every
+  position it reports; with --variants_only only the positions with a variant call are written. The options (ploidy,
+  minimum supporting depth, mapping and base quality, ...) are set with `task.ext.args`.
+keywords:
+  - variant calling
+  - naive variant caller
+  - vcf
+  - duplex
+tools:
+  - nvc:
+      description: The Naive Variant Caller
+      homepage: https://github.com/blankenberg/nvc
+      licence: ["GPLv2"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - bam:
+        type: file
+        description: Coordinate sorted BAM file
+        pattern: "*.bam"
+        ontologies:
+          - edam: "http://edamontology.org/format_2572"
+    - bai:
+        type: file
+        description: BAM index file
+        pattern: "*.bai"
+        ontologies: []
+  - - meta2:
+        type: map
+        description: |
+          Groovy Map containing genome information
+          e.g. [ id:'test', single_end:false ]
+    - fasta:
+        type: file
+        description: Reference genome FASTA file
+        pattern: "*.{fa,fasta,fna}"
+        ontologies:
+          - edam: "http://edamontology.org/format_1929"
+    - fai:
+        type: file
+        description: FASTA index file
+        pattern: "*.fai"
+        ontologies: []
+output:
+  vcf:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*.vcf":
+          type: file
+          description: VCF file with the nvc calls
+          pattern: "*.vcf"
+          ontologies:
+            - edam: "http://edamontology.org/format_3016"
+  versions_nvc:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - nvc:
+          type: string
+          description: The tool name
+      - 'naive_variant_caller.py --version 2>&1 | sed "s/^.*version //"':
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - nvc:
+          type: string
+          description: The tool name
+      - 'naive_variant_caller.py --version 2>&1 | sed "s/^.*version //"':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mcmero"
+maintainers:
+  - "@mcmero"

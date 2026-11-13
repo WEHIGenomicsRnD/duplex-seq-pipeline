@@ -1,0 +1,117 @@
+name: getreadinfo
+description: |
+  Summarises the duplex read bundles of a mapped BAM file with `bin/get_read_info.py` and `bin/format_read_info.py`:
+  one row per chromosome, start, mate start, end and UMI, with the read counts on the + and - strands (columns chrom, pos,
+  mpos, epos, umi, x, y). The table is the alternative input of calc-duplex-metrics.
+keywords:
+  - duplex
+  - UMI
+  - read info
+  - bam
+tools:
+  - get_read_info.py:
+      description: Script of this pipeline (bin/get_read_info.py) that extracts the position and UMI of every read pair
+      tool_dev_url: https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline/blob/main/bin/get_read_info.py
+      identifier: ""
+  - format_read_info.py:
+      description: Script of this pipeline (bin/format_read_info.py) that counts the reads per strand of every bundle
+      tool_dev_url: https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline/blob/main/bin/format_read_info.py
+      identifier: ""
+  - pysam:
+      description: Python module for reading BAM files
+      homepage: https://github.com/pysam-developers/pysam
+      licence: ["MIT"]
+      identifier: biotools:pysam
+  - pandas:
+      description: Python data analysis library
+      homepage: https://pandas.pydata.org
+      licence: ["BSD-3-Clause"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - bam:
+        type: file
+        description: Coordinate sorted, mapped BAM file with the UMI tags (RX, ZA, ZB)
+        pattern: "*.bam"
+        ontologies:
+          - edam: "http://edamontology.org/format_2572"
+output:
+  rinfo:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*.txt.gz":
+          type: file
+          description: Gzipped, tab-separated read info table (chrom, pos, mpos, epos, umi, x, y)
+          pattern: "*.txt.gz"
+          ontologies: []
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - 'python3 --version | sed "s/Python //"':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_pysam:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - pysam:
+          type: string
+          description: The tool name
+      - 'python3 -c "import pysam; print(pysam.__version__)" 2>&1 | tail -1':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_pandas:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - pandas:
+          type: string
+          description: The tool name
+      - 'python3 -c "import pandas; print(pandas.__version__)" 2>&1 | tail -1':
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - 'python3 --version | sed "s/Python //"':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - pysam:
+          type: string
+          description: The tool name
+      - 'python3 -c "import pysam; print(pysam.__version__)" 2>&1 | tail -1':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - pandas:
+          type: string
+          description: The tool name
+      - 'python3 -c "import pandas; print(pandas.__version__)" 2>&1 | tail -1':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mcmero"
+maintainers:
+  - "@mcmero"
