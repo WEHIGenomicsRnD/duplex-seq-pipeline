@@ -1,0 +1,31 @@
+Changes in module 'nf-core/fgbio/filterconsensusreads'
+--- modules/nf-core/fgbio/filterconsensusreads/main.nf
++++ modules/nf-core/fgbio/filterconsensusreads/main.nf
+@@ -32,13 +32,9 @@
+     if (!task.memory) {
+         log.info('[fgbio FilterConsensusReads] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.')
+     }
+-    else if (mem_gb > task.memory.giga) {
+-        if (task.memory.giga < 2) {
+-            mem_gb = 1
+-        }
+-        else {
+-            mem_gb = task.memory.giga - 1
+-        }
++    else {
++        // 90% of the task memory (upstream caps the heap at 8 GB however much is requested)
++        mem_gb = Math.max(1, (task.memory.giga * 0.9).intValue())
+     }
+     if ("${bam}" == "${prefix}.bam") {
+         error("Input and output names are the same, use \"task.ext.prefix\" to disambiguate!")
+@@ -48,7 +44,7 @@
+     fgbio \\
+         -Xmx${mem_gb}g \\
+         --tmp-dir=. \\
+-        --compression=0 \\
++        --compression=${task.ext.compression ?: 1} \\
+         FilterConsensusReads \\
+         --input ${bam} \\
+         --output ${prefix}.bam \\
+
+************************************************************

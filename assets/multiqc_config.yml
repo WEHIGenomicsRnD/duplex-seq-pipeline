@@ -1,0 +1,41 @@
+# Packaged MultiQC config; a user config (--multiqc_config) is applied on top of it.
+
+# Duplex metrics come first
+report_section_order:
+  duplex_seq:
+    order: 1000
+
+# One expandable row per sample in the General Statistics table (needs MultiQC >= 1.22). The
+# sample row shows the duplex metrics; its fold-out shows the stats of each input:
+#   <sample>_reads_1 / _reads_2   FastQC of the raw reads (ext.prefix of FASTQC)
+#   <sample>_mapped               raw BAM (samtools, Picard)
+#   <sample>_consensus            consensus BAM (samtools, mosdepth)
+# The suffixes are matched at the end of the name, and a sample name that itself ends in
+# "_1" or "_mapped" is not mistaken for one. The sample row has to exist in no module but the
+# duplex one: a module that has a "<sample>" row next to its "<sample>_<suffix>" rows renames the
+# group to "<sample> (grouped)", which would not merge with the duplex row.
+table_sample_merge:
+  "R1 reads":
+    type: regex
+    pattern: "_reads_1$"
+  "R2 reads":
+    type: regex
+    pattern: "_reads_2$"
+  "Raw BAM":
+    type: regex
+    pattern: "_mapped$"
+  "Consensus BAM":
+    type: regex
+    pattern: "_consensus$"
+
+# Name the BAM-derived outputs "<sample>_mapped" and "<sample>_consensus". Everything from
+# "_merged" on is cut: "S_mapped_merged_markdup" gives "S_mapped"; the consensus BAMs are first
+# stripped of "_mapped_merged..." ("S_consensus_mapped_merged_filtered" gives "S_consensus"). The
+# mosdepth files ("S_consensus.mosdepth.summary.txt", ...) are cut at ".mosdepth", which gives "S_consensus".
+extra_fn_clean_exts:
+  - type: truncate
+    pattern: ".mosdepth"
+  - type: regex
+    pattern: "(?<=_consensus)_mapped_merged.*$"
+  - type: regex
+    pattern: "_merged.*$"
