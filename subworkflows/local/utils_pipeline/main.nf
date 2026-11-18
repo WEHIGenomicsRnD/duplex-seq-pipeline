@@ -2,7 +2,7 @@
 // Subworkflow with functionality specific to the duplex-seq-pipeline pipeline
 //
 
-include { validateParameters ; paramsSummaryLog ; samplesheetToList } from 'plugin/nf-schema'
+include { validateParameters ; paramsHelp ; paramsSummaryLog ; samplesheetToList } from 'plugin/nf-schema'
 
 workflow PIPELINE_INITIALISATION {
     take:
@@ -11,6 +11,11 @@ workflow PIPELINE_INITIALISATION {
     merge_lanes // boolean: the rows of a sample are its lanes and are merged
 
     main:
+
+    if (params.help) {
+        log.info(paramsHelp())
+        exit 0
+    }
 
     if (validate_params) {
         validateParameters()
