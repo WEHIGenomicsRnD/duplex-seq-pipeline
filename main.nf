@@ -18,5 +18,5 @@ workflow {
         params.merge_lanes,
     )
 
-    DUPLEXSEQ(PIPELINE_INITIALISATION.out.samplesheet)
+    DUPLEXSEQ(PIPELINE_INITIALISATION.out)
 }

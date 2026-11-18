@@ -45,7 +45,7 @@ workflow DUPLEXSEQ {
 
     // the lanes of a sample are merged first (only with --merge_lanes), so that everything below sees one pair of FASTQ files per sample
     MERGE_LANES(ch_samplesheet)
-    ch_samples = MERGE_LANES.out.samplesheet
+    ch_samples = MERGE_LANES.out
 
     // FASTQ -> UMI-extracted, aligned BAM
     ch_reads = ch_samples.map { meta, reads, _umis -> [meta, reads] }

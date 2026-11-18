@@ -22,10 +22,9 @@ workflow PIPELINE_INITIALISATION {
     // resolved against the samplesheet's directory. The rows are checked here, before anything runs.
     def samplesheet_dir = file(input).parent
     def samples = groupLanes(samplesheetToList(input, "${projectDir}/assets/schema_input.json"), merge_lanes, samplesheet_dir)
-    ch_samplesheet = channel.fromList(samples)
 
     emit:
-    samplesheet = ch_samplesheet
+    channel.fromList(samples)
 }
 
 //
