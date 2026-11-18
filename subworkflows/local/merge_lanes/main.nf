@@ -22,8 +22,6 @@ workflow MERGE_LANES {
 
     ch_merged = CAT_FASTQ.out.reads.join(ch_by_lanes.several.map { meta, _reads, umis -> [meta, umis] }, failOnMismatch: true)
 
-    // the number of lanes is only needed here: afterwards meta is the same as for a run without merging
-    // emits channel: [ val(meta), [ path(fastq_1), path(fastq_2) ], path(umi_file) or [] ]
     emit:
     ch_by_lanes.single
         .mix(ch_merged)

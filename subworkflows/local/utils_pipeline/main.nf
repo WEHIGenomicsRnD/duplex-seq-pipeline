@@ -14,7 +14,7 @@ workflow PIPELINE_INITIALISATION {
 
     if (params.help) {
         log.info(paramsHelp())
-        exit 0
+        exit(0)
     }
 
     if (validate_params) {
