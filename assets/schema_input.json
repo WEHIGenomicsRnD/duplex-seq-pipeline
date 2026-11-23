@@ -9,8 +9,8 @@
         "properties": {
             "sample": {
                 "type": "string",
-                "pattern": "^\\S+$",
-                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*(?![\\s\\S])",
+                "errorMessage": "Sample name must start with an ASCII letter or digit and contain only ASCII letters, digits, dots, underscores or hyphens",
                 "meta": ["id"]
             },
             "fastq_1": {
@@ -25,8 +25,8 @@
             },
             "read_structure": {
                 "type": "string",
-                "pattern": "^\\S+( \\S+)?$",
-                "errorMessage": "Read structure must be one fgbio read structure per read, separated by a space, e.g. '3M2S146T 3M2S146T'",
+                "pattern": "^(?:(?:\\d+|\\+)[BMST])+(?: (?:(?:\\d+|\\+)[BMST])+)?(?![\\s\\S])",
+                "errorMessage": "Read structure must be one fgbio read structure per read (segments such as 3M, 2S, 146T or +T), separated by a space, e.g. '3M2S146T 3M2S146T'",
                 "meta": ["read_structure"]
             },
             "umi_file": {

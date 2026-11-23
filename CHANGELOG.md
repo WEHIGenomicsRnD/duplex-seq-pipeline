@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- Sample names are limited to ASCII letters, digits, dots, underscores and hyphens (starting with a letter or digit), and
+  read structures to fgbio segments (`3M2S146T 3M2S146T`). The values are used unquoted in tool commands and in file
+  names, so a name such as `S$(id)` was run as a command.
+
 ## [0.2.0] - 2026-11-13
 
 The Nextflow rewrite of the pipeline. The Snakemake pipeline (release 0.1.0) is no longer in the repository; it stays
