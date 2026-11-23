@@ -32,13 +32,15 @@ table_sample_merge:
 # suffixes the pipeline adds, at the end of the name, so a sample name that contains "_merged" (or any
 # other part of these suffixes) is left alone and FastQC names ("<sample>_reads_1") are not touched:
 #   S_mapped_merged, S_mapped_merged_markdup                      -> S_mapped
-#   S_consensus_mapped_merged_filtered                         -> S_consensus
+#   S_consensus_mapped_merged_filtered                            -> S_consensus
+# Picard names the sample after its --INPUT ("S_mapped_merged.bam"), and the cleaning runs before the extension is
+# removed, so the patterns also allow a trailing ".bam".
 # The mosdepth files ("S_consensus.mosdepth.summary.txt", ...) are cut at ".mosdepth", which gives "S_consensus".
 # tests/scripts/check_multiqc_names.py checks these patterns.
 extra_fn_clean_exts:
   - type: truncate
     pattern: ".mosdepth"
   - type: regex
-    pattern: "(?<=_consensus)_mapped_merged(?:_filtered)?$"
+    pattern: "(?<=_consensus)_mapped_merged(?:_filtered)?(?:\\.bam)?$"
   - type: regex
-    pattern: "(?<=_mapped)_merged(?:_markdup)?$"
+    pattern: "(?<=_mapped)_merged(?:_markdup)?(?:\\.bam)?$"

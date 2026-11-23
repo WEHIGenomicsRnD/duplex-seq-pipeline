@@ -11,7 +11,7 @@ from pathlib import Path
 
 config = (Path(__file__).resolve().parents[2] / "assets" / "multiqc_config.yml").read_text()
 block = config.split("extra_fn_clean_exts:")[1]
-patterns = re.findall(r'type: regex\s+pattern: "([^"]+)"', block)
+patterns = [p.replace("\\\\", "\\") for p in re.findall(r'type: regex\s+pattern: "([^"]+)"', block)]  # YAML double-quoted escapes
 truncates = re.findall(r'type: truncate\s+pattern: "([^"]+)"', block)
 
 
@@ -26,6 +26,10 @@ def clean(name):
 cases = {
     "S_mapped_merged_markdup": "S_mapped",
     "S_mapped_merged": "S_mapped",
+    # Picard names the sample after its --INPUT, with the extension still on when the cleaning runs
+    "S_mapped_merged.bam": "S_mapped",
+    "S_mapped_merged_markdup.bam": "S_mapped",
+    "S_consensus_mapped_merged_filtered.bam": "S_consensus",
     "S_mapped": "S_mapped",
     "S_consensus": "S_consensus",
     "S_consensus.mosdepth.summary": "S_consensus",
