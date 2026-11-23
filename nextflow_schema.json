@@ -97,13 +97,13 @@
                 "molecular_index_tags": {
                     "type": "string",
                     "default": "ZA ZB",
-                    "description": "SAM tags in which to store the molecular indices (ExtractUmisFromBam --molecular-index-tags).",
+                    "description": "SAM tags in which to store the molecular indices (ExtractUmisFromBam --molecular-index-tags). Only the default is supported: the read info table and the duplex metrics read the tags ZA and ZB.",
                     "fa_icon": "fas fa-tags"
                 },
                 "single_tag": {
                     "type": "string",
                     "default": "RX",
-                    "description": "Single tag into which to concatenate all molecular indices (ExtractUmisFromBam --single-tag).",
+                    "description": "Single tag into which to concatenate all molecular indices (ExtractUmisFromBam --single-tag). Only the default is supported: the read info table and the duplex metrics read the tag RX.",
                     "fa_icon": "fas fa-tag"
                 },
                 "umis": {

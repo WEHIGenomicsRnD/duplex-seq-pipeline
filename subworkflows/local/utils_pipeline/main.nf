@@ -21,6 +21,11 @@ workflow PIPELINE_INITIALISATION {
         validateParameters()
     }
 
+    // get_read_info.py and calc-duplex-metrics read the UMI from RX and from ZA/ZB, so other tags break the duplex metrics
+    if (params.single_tag != 'RX' || params.molecular_index_tags != 'ZA ZB') {
+        error("--single_tag and --molecular_index_tags cannot be changed: the read info table and the duplex metrics read the UMIs from 'RX' and 'ZA ZB' (got '${params.single_tag}' and '${params.molecular_index_tags}')")
+    }
+
     log.info(paramsSummaryLog(workflow))
 
     // One entry per sample: [ meta, fastq files, umi_file ]. Relative paths in the samplesheet are
