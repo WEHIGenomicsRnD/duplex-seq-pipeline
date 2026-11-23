@@ -10,6 +10,8 @@ All notable changes to this project are documented here. The format follows
 - Sample names are limited to ASCII letters, digits, dots, underscores and hyphens (starting with a letter or digit), and
   read structures to fgbio segments (`3M2S146T 3M2S146T`). The values are used unquoted in tool commands and in file
   names, so a name such as `S$(id)` was run as a command.
+- The MultiQC name cleaning of the BAM-derived files matches only the suffixes the pipeline adds, at the end of the
+  name, so a sample name such as `tumour_merged_A` is no longer cut (`tests/scripts/check_multiqc_names.py`).
 
 ## [0.2.0] - 2026-11-13
 
