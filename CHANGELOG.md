@@ -13,9 +13,21 @@ All notable changes to this project are documented here. The format follows
 - `--single_tag` and `--molecular_index_tags` are checked at start-up: the read info table and the duplex metrics read the
   UMIs from `RX` and `ZA ZB`, so any other value stops the run with a message instead of failing later. GroupReadsByUmi
   (`--raw-tag`) and MarkDuplicates (`--BARCODE_TAG`) now use `--single_tag`.
-
 - The MultiQC name cleaning of the BAM-derived files matches only the suffixes the pipeline adds, at the end of the
   name, so a sample name such as `tumour_merged_A` is no longer cut (`tests/scripts/check_multiqc_names.py`).
+
+### Fixed
+
+- The per-base consensus tags of fgbio (`ad`, `ae`, `aq`, `ac`, `bd`, `be`, `bq`, `bc`, `cd`, `ce`) were in sequencing
+  orientation on reverse-strand reads of the realigned consensus BAM, while SEQ is in reference orientation:
+  MergeBamAlignment only reverses the tags it is given. FilterConsensusReads therefore masked bases at mirrored
+  positions on reverse-strand reads (good bases became N), and ClipBam left the tags of hard-clipped reads longer than
+  SEQ. MergeBamAlignment now reverses (`--ATTRIBUTES_TO_REVERSE`) or reverse complements
+  (`--ATTRIBUTES_TO_REVERSE_COMPLEMENT`) these tags in the consensus realignment, and ClipBam runs with
+  `--auto-clip-attributes true`. This changes the filtered and clipped consensus BAMs, and the variant calls, relative
+  to 0.2.0 and to the Snakemake pipeline (0.1.0), which has the same bug.
+  `tests/scripts/check_consensus_tag_orientation.sh` checks the orientation (and length) of the tags in a consensus BAM,
+  and `tests/scripts/check_consensus_masking.sh` that the Ns of the filtered BAM follow from the tags at the same index.
 
 ## [0.2.0] - 2026-11-13
 
