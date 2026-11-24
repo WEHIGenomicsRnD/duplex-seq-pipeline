@@ -21,7 +21,7 @@ max_error=${5:-0.1}
 
 # the unfiltered records (bases and qualities), then the filtered ones; records are matched by name and read number
 { samtools view "$unfiltered" | awk -F'\t' '{ print "U\t" $1 "\t" int($2 / 64) % 4 "\t" $10 "\t" $11 }'
-  samtools view "$filtered" | awk -F'\t' '{ print "F\t" $0 }'
+    samtools view "$filtered" | awk -F'\t' '{ print "F\t" $0 }'
 } | awk -F'\t' -v min_reads="$min_reads" -v min_baseq="$min_baseq" -v max_error="$max_error" '
 BEGIN {
     split(min_reads, m, " "); min_duplex = m[1]; min_ab = m[2]; min_ba = m[3]
