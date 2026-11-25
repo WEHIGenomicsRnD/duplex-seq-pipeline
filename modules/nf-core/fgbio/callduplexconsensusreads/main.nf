@@ -26,13 +26,9 @@ process FGBIO_CALLDUPLEXCONSENSUSREADS {
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}_consensus_unmapped"
 
-    def mem_gb = 8
+    def mem_gb = task.memory ? Math.max(1, task.memory.giga - 1) : 8
     if (!task.memory) {
         log.info('[fgbio CallDuplexConsensusReads] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.')
-    }
-    else {
-        // 90% of the task memory (upstream caps the heap at 8 GB however much is requested)
-        mem_gb = Math.max(1, (task.memory.giga * 0.9).intValue())
     }
     if ("${grouped_bam}" == "${prefix}.bam") {
         error("Input and output names are the same, use \"task.ext.prefix\" to disambiguate!")

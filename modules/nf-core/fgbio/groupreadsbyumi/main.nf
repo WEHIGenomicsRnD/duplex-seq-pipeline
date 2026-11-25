@@ -26,13 +26,9 @@ process FGBIO_GROUPREADSBYUMI {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}_umi-grouped"
-    def mem_gb = 8
+    def mem_gb = task.memory ? Math.max(1, task.memory.giga - 1) : 8
     if (!task.memory) {
-        log.info('[fgbio FilterConsensusReads] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.')
-    }
-    else {
-        // 90% of the task memory (upstream caps the heap at 8 GB however much is requested)
-        mem_gb = Math.max(1, (task.memory.giga * 0.9).intValue())
+        log.info('[fgbio GroupReadsByUmi] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.')
     }
 
     if ("${bam}" == "${prefix}.bam") {

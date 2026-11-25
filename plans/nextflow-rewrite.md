@@ -555,7 +555,7 @@ A read-through of the whole branch against the Snakemake rules of 0.1.0; no test
 
 ### Should fix
 
-1. ~~**fgbio memory is stuck at 8 GB.**~~ **Fixed.** The nf-core fgbio modules start from `mem_gb = 8` and only lower it, so `GroupReadsByUmi`, `CallDuplexConsensusReads` and `FilterConsensusReads` ran with `-Xmx8g` although `conf/base.config` reserves 64 GB for `FGBIO_.*`. On real data this is a likely out-of-memory failure (GroupReadsByUmi re-sorts the BAM), and a retry does not help (a Java OOM exits 1, which is not retried, and the heap does not grow with `task.attempt`). The heap is now 90% of `task.memory`, as in the local fgbio modules. Done as patches of the three modules (`fgbio-<module>.diff`, listed in `modules.json`; the `filterconsensusreads` patch also carries the compression change). Not re-run on a real sample.
+1. ~~**fgbio memory is stuck at 8 GB.**~~ **Fixed.** The nf-core fgbio modules start from `mem_gb = 8` and only lower it, so `GroupReadsByUmi`, `CallDuplexConsensusReads` and `FilterConsensusReads` ran with `-Xmx8g` although `conf/base.config` reserves 64 GB for `FGBIO_.*`. On real data this is a likely out-of-memory failure (GroupReadsByUmi re-sorts the BAM), and a retry does not help (a Java OOM exits 1, which is not retried, and the heap does not grow with `task.attempt`). First patched to 90% of `task.memory`; now fixed upstream (nf-core/modules#13684, `3c23b0c`: heap is `task.memory.giga - 1`), so the three modules are updated to that commit and the memory patches are dropped. The `filterconsensusreads` patch remains for the compression change only. Not re-run on a real sample.
 
 ### Worth considering
 

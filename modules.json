@@ -32,21 +32,19 @@
                     },
                     "fgbio/callduplexconsensusreads": {
                         "branch": "master",
-                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
-                        "installed_by": ["modules"],
-                        "patch": "modules/nf-core/fgbio/callduplexconsensusreads/fgbio-callduplexconsensusreads.diff"
+                        "git_sha": "3c23b0c6537dbc9219157c12c0ba2e828a3cf1a3",
+                        "installed_by": ["modules"]
                     },
                     "fgbio/filterconsensusreads": {
                         "branch": "master",
-                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
+                        "git_sha": "3c23b0c6537dbc9219157c12c0ba2e828a3cf1a3",
                         "installed_by": ["modules"],
                         "patch": "modules/nf-core/fgbio/filterconsensusreads/fgbio-filterconsensusreads.diff"
                     },
                     "fgbio/groupreadsbyumi": {
                         "branch": "master",
-                        "git_sha": "7b3452a23773f687ededb4befd037920e5a51341",
-                        "installed_by": ["modules"],
-                        "patch": "modules/nf-core/fgbio/groupreadsbyumi/fgbio-groupreadsbyumi.diff"
+                        "git_sha": "3c23b0c6537dbc9219157c12c0ba2e828a3cf1a3",
+                        "installed_by": ["modules"]
                     },
                     "gatk4/mergebamalignment": {
                         "branch": "master",
