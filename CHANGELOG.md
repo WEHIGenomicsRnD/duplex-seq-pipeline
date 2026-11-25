@@ -3,38 +3,7 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
-
-### Changed
-
-- Sample names are limited to ASCII letters, digits, dots, underscores and hyphens (starting with a letter or digit), and
-  read structures to fgbio segments (`3M2S146T 3M2S146T`). The values are used unquoted in tool commands and in file
-  names, so a name such as `S$(id)` was run as a command.
-- `--single_tag` and `--molecular_index_tags` are checked at start-up: the read info table and the duplex metrics read the
-  UMIs from `RX` and `ZA ZB`, so any other value stops the run with a message instead of failing later. GroupReadsByUmi
-  (`--raw-tag`) and MarkDuplicates (`--BARCODE_TAG`) now use `--single_tag`.
-- The MultiQC name cleaning of the BAM-derived files matches only the suffixes the pipeline adds, at the end of the
-  name, so a sample name such as `tumour_merged_A` is no longer cut (`tests/scripts/check_multiqc_names.py`).
-
-### Fixed
-
-- The per-base consensus tags of fgbio (`ad`, `ae`, `aq`, `ac`, `bd`, `be`, `bq`, `bc`, `cd`, `ce`) were in sequencing
-  orientation on reverse-strand reads of the realigned consensus BAM, while SEQ is in reference orientation:
-  MergeBamAlignment only reverses the tags it is given. FilterConsensusReads therefore masked bases at mirrored
-  positions on reverse-strand reads (good bases became N), and ClipBam left the tags of hard-clipped reads longer than
-  SEQ. MergeBamAlignment now reverses (`--ATTRIBUTES_TO_REVERSE`) or reverse complements
-  (`--ATTRIBUTES_TO_REVERSE_COMPLEMENT`) these tags in the consensus realignment, and ClipBam runs with
-  `--auto-clip-attributes true`. This changes the filtered and clipped consensus BAMs, and the variant calls, relative
-  to 0.2.0 and to the Snakemake pipeline (0.1.0), which has the same bug.
-  `tests/scripts/check_consensus_tag_orientation.sh` checks the orientation (and length) of the tags in a consensus BAM,
-  and `tests/scripts/check_consensus_masking.sh` that the Ns of the filtered BAM follow from the tags at the same index.
-
-### Removed
-
-- The rewrite plan (`plans/nextflow-rewrite.md`). Its open items are tracked as
-  [GitHub issues](https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline/issues); the plan stays in the git history.
-
-## [0.2.0] - 2026-11-13
+## [0.2.0] - 2026-11-25
 
 The Nextflow rewrite of the pipeline. The Snakemake pipeline (release 0.1.0) is no longer in the repository; it stays
 available at the tag `0.1.0` (`git clone --branch 0.1.0 https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline.git`) and is
@@ -129,6 +98,14 @@ Compared with the Snakemake pipeline (0.1.0):
 - The editorconfig check covers the whole repository (except the nf-core directories) and does not check the indent size
   of markdown, because prettier aligns content under numbered list items with 3 spaces. Trailing whitespace in
   the Snakemake `config/config.yaml` and the docstring indentation in `slurm/slurm_utils.py` were fixed (before those files were removed).
+- Sample names are limited to ASCII letters, digits, dots, underscores and hyphens (starting with a letter or digit), and
+  read structures to fgbio segments (`3M2S146T 3M2S146T`). The values are used unquoted in tool commands and in file
+  names, so a name such as `S$(id)` was run as a command.
+- `--single_tag` and `--molecular_index_tags` are checked at start-up: the read info table and the duplex metrics read the
+  UMIs from `RX` and `ZA ZB`, so any other value stops the run with a message instead of failing later. GroupReadsByUmi
+  (`--raw-tag`) and MarkDuplicates (`--BARCODE_TAG`) now use `--single_tag`.
+- The MultiQC name cleaning of the BAM-derived files matches only the suffixes the pipeline adds, at the end of the
+  name, so a sample name such as `tumour_merged_A` is not cut (`tests/scripts/check_multiqc_names.py`).
 
 ### Removed
 
@@ -137,6 +114,19 @@ Compared with the Snakemake pipeline (0.1.0):
 - The Snakemake pipeline itself (`workflow/`, `config/`, `slurm/` and `dag.pdf`), and the Snakemake half of the README. The
   tag `0.1.0` has all of it, including its README.
 - The unpublished first skeleton (`nf-pipeline/`).
+
+### Fixed
+
+- The per-base consensus tags of fgbio (`ad`, `ae`, `aq`, `ac`, `bd`, `be`, `bq`, `bc`, `cd`, `ce`) were in sequencing
+  orientation on reverse-strand reads of the realigned consensus BAM, while SEQ is in reference orientation:
+  MergeBamAlignment only reverses the tags it is given. FilterConsensusReads therefore masked bases at mirrored
+  positions on reverse-strand reads (good bases became N), and ClipBam left the tags of hard-clipped reads longer than
+  SEQ. MergeBamAlignment now reverses (`--ATTRIBUTES_TO_REVERSE`) or reverse complements
+  (`--ATTRIBUTES_TO_REVERSE_COMPLEMENT`) these tags in the consensus realignment, and ClipBam runs with
+  `--auto-clip-attributes true`. This changes the filtered and clipped consensus BAMs, and the variant calls, relative
+  to the Snakemake pipeline (0.1.0), which has the bug.
+  `tests/scripts/check_consensus_tag_orientation.sh` checks the orientation (and length) of the tags in a consensus BAM,
+  and `tests/scripts/check_consensus_masking.sh` that the Ns of the filtered BAM follow from the tags at the same index.
 
 ### Notes
 
