@@ -29,11 +29,16 @@ All notable changes to this project are documented here. The format follows
   `tests/scripts/check_consensus_tag_orientation.sh` checks the orientation (and length) of the tags in a consensus BAM,
   and `tests/scripts/check_consensus_masking.sh` that the Ns of the filtered BAM follow from the tags at the same index.
 
+### Removed
+
+- The rewrite plan (`plans/nextflow-rewrite.md`). Its open items are tracked as
+  [GitHub issues](https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline/issues); the plan stays in the git history.
+
 ## [0.2.0] - 2026-11-13
 
 The Nextflow rewrite of the pipeline. The Snakemake pipeline (release 0.1.0) is no longer in the repository; it stays
 available at the tag `0.1.0` (`git clone --branch 0.1.0 https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline.git`) and is
-the legacy version. The rewrite plan is in [`plans/nextflow-rewrite.md`](plans/nextflow-rewrite.md).
+the legacy version.
 
 ### Added
 
