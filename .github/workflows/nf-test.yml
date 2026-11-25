@@ -1,0 +1,58 @@
+name: nf-test
+
+# only for the main and dev branches (pushes, and pull requests into them)
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+concurrency:
+  group: nf-test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  nf-test:
+    name: nf-test (docker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: nf-core/setup-nextflow@v2
+        with:
+          version: "25.10.0"
+
+      - uses: nf-core/setup-nf-test@v2
+        with:
+          version: "0.9.5"
+
+      # bowtie2 for the FastQ Screen test database (the database is not part of the repository)
+      - uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: tests/scripts/environment.yml
+          cache-environment: true
+          init-shell: bash
+
+      - name: Build the FastQ Screen test database
+        shell: micromamba-shell {0}
+        run: |
+          tests/scripts/build_fastq_screen_db.sh \
+            tests/data/GCA_002087985.1_ASM208798v1_genomic.fna.gz \
+            "${RUNNER_TEMP}/fastq_screen_db"
+          echo "FASTQ_SCREEN_DB=${RUNNER_TEMP}/fastq_screen_db/FastQ_Screen_Genomes" >> "${GITHUB_ENV}"
+
+      - name: Run nf-test
+        run: nf-test test --profile test,docker --verbose
+
+      - name: Upload the nf-test logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nf-test-logs
+          path: |
+            .nf-test.log
+            .nf-test-work/tests/*/meta/

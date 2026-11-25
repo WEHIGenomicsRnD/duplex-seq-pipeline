@@ -1,0 +1,12 @@
+.nextflow*
+work/
+results/
+.DS_Store
+*.pyc
+.nf-core.yml
+conf/sandbox.config
+.nf-test/
+.nf-test.log
+nf-test
+.nf-test-work
+nf-test.sandbox.config

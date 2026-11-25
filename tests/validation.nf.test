@@ -1,0 +1,59 @@
+nextflow_pipeline {
+
+    name "Test the validation of the inputs"
+    script "main.nf"
+
+    test("A sample name with shell metacharacters is an error") {
+
+        tag "validation"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input = "${projectDir}/tests/data/samplesheet_badname.csv"
+            }
+        }
+
+        then {
+            assert workflow.failed
+            def output = (workflow.stdout + workflow.stderr).join("\n")
+            assert output.contains("Sample name must start with an ASCII letter or digit")
+        }
+    }
+
+    test("A read structure with shell metacharacters is an error") {
+
+        tag "validation"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input = "${projectDir}/tests/data/samplesheet_badstructure.csv"
+            }
+        }
+
+        then {
+            assert workflow.failed
+            def output = (workflow.stdout + workflow.stderr).join("\n")
+            assert output.contains("Read structure must be one fgbio read structure per read")
+        }
+    }
+
+    test("Changing the UMI tags is an error") {
+
+        tag "validation"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                single_tag = "XX"
+            }
+        }
+
+        then {
+            assert workflow.failed
+            def output = (workflow.stdout + workflow.stderr).join("\n")
+            assert output.contains("--single_tag and --molecular_index_tags cannot be changed")
+        }
+    }
+}

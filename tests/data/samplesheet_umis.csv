@@ -1,0 +1,3 @@
+sample,fastq_1,fastq_2,read_structure,umi_file
+NanoMB1Rep1,lanes/NanoMB1Rep1_L001_R1.fastq.gz,lanes/NanoMB1Rep1_L001_R2.fastq.gz,3M2S146T 3M2S146T,umis.txt
+NanoMB1Rep2,lanes/NanoMB1Rep2_L001_R1.fastq.gz,lanes/NanoMB1Rep2_L001_R2.fastq.gz,3M2S+T 3M2S+T,

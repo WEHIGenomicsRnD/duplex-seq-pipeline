@@ -1,0 +1,8 @@
+# bowtie2 for tests/scripts/build_fastq_screen_db.sh (used by the CI workflow and available to anyone who
+# wants to build the FastQ Screen test database: micromamba create -f tests/scripts/environment.yml)
+name: fastq-screen-test-db
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::bowtie2=2.5.3

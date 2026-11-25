@@ -1,0 +1,85 @@
+name: calc_duplex_metrics
+description: |
+  Calculates duplex sequencing QC metrics (efficiency, drop-out rate, GC content, UMI family sizes and, with a target BED
+  file, on-target rates) from a mapped BAM file or from the read info table of GET_READ_INFO. The metric groups and the
+  BAM streaming options are set with `task.ext.args` and `task.ext.args2`.
+keywords:
+  - duplex
+  - metrics
+  - UMI
+  - QC
+tools:
+  - calc-duplex-metrics:
+      description: Calculate duplex QC metrics
+      homepage: https://github.com/WEHIGenomicsRnD/calculate-duplex-metrics
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - input:
+        type: file
+        description: Mapped BAM file, or the read info table written by GET_READ_INFO
+        pattern: "*.{bam,txt.gz}"
+        ontologies: []
+  - - meta2:
+        type: map
+        description: |
+          Groovy Map containing genome information
+          e.g. [ id:'test', single_end:false ]
+    - fasta:
+        type: file
+        description: Reference genome FASTA file (used for the GC metrics)
+        pattern: "*.{fa,fasta,fna}"
+        ontologies:
+          - edam: "http://edamontology.org/format_1929"
+  - target_bed:
+      type: file
+      description: Optional BED file of target regions (use an empty list to skip); enables the on-target rates
+      pattern: "*.bed"
+      ontologies: []
+  - input_format:
+      type: string
+      enum: ["bam", "rinfo"]
+      description: Format of the input file
+output:
+  csv:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*_metrics.csv":
+          type: file
+          description: Metrics in long format (columns sample, metric, value)
+          pattern: "*_metrics.csv"
+          ontologies:
+            - edam: "http://edamontology.org/format_3752"
+  versions_calcduplexmetrics:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - calc-duplex-metrics:
+          type: string
+          description: The tool name
+      - "echo '${task.container}' | sed 's/^.*://'":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - calc-duplex-metrics:
+          type: string
+          description: The tool name
+      - "echo '${task.container}' | sed 's/^.*://'":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mcmero"
+maintainers:
+  - "@mcmero"
