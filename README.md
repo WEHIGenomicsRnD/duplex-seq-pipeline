@@ -103,6 +103,7 @@ The main parameters (all in `nextflow_schema.json`):
 | `--output_read_info`                  | `false`             | Write the read info table (`QC/read_info`) and compute the duplex metrics from it instead of from the BAM.                                                                                                                                                           |
 | `--markdup_duplex_umi`                | `true`              | Mark duplicates per duplex molecule (the UMIs `A-B` and `B-A` of the two strands count as one). Turn it off for single-UMI read structures, or to mark per strand as release 0.1.0 does.                                                                             |
 | `--variant_caller`                    | `pileup`            | `pileup` (bcftools mpileup and `bin/filter_pileup.py`) or `nvc`, the naive variant caller of release 0.1.0, which is much slower on samples with many off-target reads. Both write the same VCF fields; see [Variant calling](#variant-calling) for the differences. |
+| `--variant_calling_padding`           | `10`                | Bases added to both sides of the `--target_bed` regions for variant calling only (the QC uses the regions as they are).                                                                                                                                              |
 | `--multiqc_config`, `--multiqc_title` |                     | A MultiQC config that is applied on top of the packaged one, and a report title.                                                                                                                                                                                     |
 
 The consensus calling and filtering options (`--min_reads`, `--min_base_quality`, ...) and the variant calling options
@@ -135,10 +136,14 @@ nvc, with these differences:
   when the most supported allele is N).
 - An indel is only looked at when at least `--min_reads2` reads have it (mpileup `--min-ireads`), so indels with fewer
   reads are not in `NC`, and an insertion with fewer reads is not in `DP` (nvc counts insertions in `DP`).
-- mpileup finds indels by realigning the reads, where nvc takes them from the CIGAR; the counts can differ by a read.
+- mpileup finds indels by realigning the reads, where nvc takes them from the CIGAR, so in homopolymers reads can be
+  counted under a neighbouring indel length. An insertion with N bases is a separate allele in nvc (`CN`, `CNT`, ...),
+  while mpileup counts its reads under the matching insertion.
 - The `NC` entries are sorted, and the header has `##contig` lines and an INFO `DP` line.
 
-With `--target_bed`, mpileup only looks at the target regions, and nvc is given only the reads that overlap them (its run
+With `--target_bed`, the regions are padded by `--variant_calling_padding` bases (10) on each side for variant calling
+only, as an indel is placed on the base before it and one at the start of a region would otherwise be missed. mpileup
+only looks at the padded regions, and nvc is given only the reads that overlap them (its run
 time grows with the number of separately covered stretches of the genome, so off-target reads such as chimeric read
 pairs make it very slow); both then report only positions in the regions.
 

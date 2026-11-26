@@ -92,6 +92,7 @@ workflow DUPLEXSEQ {
         ch_fasta_fai,
         ch_fasta_fai_dict,
         ch_target_bed,
+        params.variant_calling_padding,
         params.variant_caller,
     )
 

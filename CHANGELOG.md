@@ -17,6 +17,8 @@ All notable changes to this project are documented here. The format follows
   subset to the reads that overlap the targets (nf-core `samtools/view`), and `filter_vcf.py --regions` keeps the calls in
   the regions. nvc's run time grows with the number of separately covered stretches of each chromosome, so samples with
   many off-target (chimeric) read pairs took up to 24 h and more genome-wide.
+- For variant calling the target regions are padded by `--variant_calling_padding` (10) bases on each side, so that an
+  indel at the start of a region, which VCF places on the base before it, is called. The QC uses the regions as they are.
 - nvc counts in `uint32` arrays (`--coverage_dtype=uint32`) instead of `uint64`.
 - `--ploidy` also sets the genotype of the pileup caller.
 - `--ploidy` defaults to 2 (diploid) instead of 1.
