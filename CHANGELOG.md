@@ -20,6 +20,7 @@ All notable changes to this project are documented here. The format follows
 - nvc counts in `uint32` arrays (`--coverage_dtype=uint32`) instead of `uint64`.
 - `--ploidy` also sets the genotype of the pileup caller.
 - `--ploidy` defaults to 2 (diploid) instead of 1.
+- `tower.yml`, so the MultiQC report can be viewed in the Reports tab of a Seqera Platform run.
 
 ## [0.2.0] - 2026-11-25
 
