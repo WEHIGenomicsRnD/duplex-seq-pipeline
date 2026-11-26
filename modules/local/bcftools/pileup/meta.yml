@@ -1,0 +1,96 @@
+name: bcftools_pileup
+description: |
+  Piles up a BAM file with bcftools mpileup (FORMAT/AD and FORMAT/DP) and keeps all the records (nucleotides and
+  indels) of the candidate variant positions, selected with the bcftools view filter in `task.ext.args2` (e.g.
+  `--include 'MAX(FMT/AD[0:1-]) >= 2'`). The mpileup options are set with `task.ext.args`; a BED file of regions
+  restricts the pileup to them. A VCF with only the header is written when there is no candidate position.
+keywords:
+  - variant calling
+  - pileup
+  - vcf
+  - duplex
+tools:
+  - bcftools:
+      description: Tools for variant calling and manipulating VCFs and BCFs
+      homepage: http://samtools.github.io/bcftools/bcftools.html
+      documentation: http://www.htslib.org/doc/bcftools.html
+      licence: ["MIT"]
+      identifier: biotools:bcftools
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - bam:
+        type: file
+        description: Coordinate sorted BAM file
+        pattern: "*.bam"
+        ontologies:
+          - edam: "http://edamontology.org/format_2572"
+    - bai:
+        type: file
+        description: BAM index file
+        pattern: "*.bai"
+        ontologies: []
+  - - meta2:
+        type: map
+        description: |
+          Groovy Map containing genome information
+          e.g. [ id:'test', single_end:false ]
+    - fasta:
+        type: file
+        description: Reference genome FASTA file
+        pattern: "*.{fa,fasta,fna}"
+        ontologies:
+          - edam: "http://edamontology.org/format_1929"
+    - fai:
+        type: file
+        description: FASTA index file
+        pattern: "*.fai"
+        ontologies: []
+  - regions:
+      type: file
+      description: Optional BED file of the regions to pile up (0-based)
+      pattern: "*.bed"
+      ontologies:
+        - edam: "http://edamontology.org/format_3003"
+output:
+  vcf:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*.pileup.vcf.gz":
+          type: file
+          description: Gzipped VCF with the mpileup records of the candidate positions
+          pattern: "*.pileup.vcf.gz"
+          ontologies:
+            - edam: "http://edamontology.org/format_3016"
+  versions_bcftools:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - bcftools:
+          type: string
+          description: The tool name
+      - "bcftools --version | sed '1!d; s/^.*bcftools //'":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - bcftools:
+          type: string
+          description: The tool name
+      - "bcftools --version | sed '1!d; s/^.*bcftools //'":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mcmero"
+maintainers:
+  - "@mcmero"

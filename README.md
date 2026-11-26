@@ -19,8 +19,9 @@ same alignments, and the remaining differences were traced to tool versions, mai
 2. **UMIs and alignment:** the FASTQ files become an unmapped BAM, the UMIs are extracted with fgbio (`--read_structure`) and
    optionally corrected against a list of known UMIs (`--umis`), and the reads are aligned with bwa mem and merged back.
 3. **Duplex consensus:** reads are grouped by UMI, duplex consensus reads are called, realigned and filtered (fgbio).
-4. **Variants:** overlapping read pairs of the filtered consensus reads are clipped (fgbio ClipBam), variants are called with
-   the naive variant caller (nvc) and the VCF is filtered.
+4. **Variants:** overlapping read pairs of the filtered consensus reads are clipped (fgbio ClipBam) and variants are called
+   with bcftools mpileup and `bin/filter_pileup.py`, which counts and reports the alleles as the naive variant caller (nvc)
+   of release 0.1.0 does (`--variant_caller nvc` runs nvc itself). With `--target_bed` only the target regions are called.
 5. **QC:** FastQC, FastQ Screen (when a database is given), Picard MarkDuplicates (per duplex molecule), samtools stats and
    flagstat, Qualimap (`--run_qualimap`), the coverage of the duplex reads (mosdepth, on the clipped consensus BAM) and the
    duplex metrics of
@@ -89,23 +90,24 @@ files are only kept in the work directory.
 
 The main parameters (all in `nextflow_schema.json`):
 
-| Parameter                             | Default             | Description                                                                                                                                                                                                                             |
-| ------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--merge_lanes`                       | `false`             | The rows of a sample in the samplesheet are its lanes: merge them (see above).                                                                                                                                                          |
-| `--input`, `--outdir`                 |                     | The samplesheet and the output directory (`results`).                                                                                                                                                                                   |
-| `--fasta`                             |                     | Reference genome FASTA (may be gzipped). `--fasta_fai`, `--dict` and `--bwa` take indexes that already exist.                                                                                                                           |
-| `--read_structure`                    | `3M2S146T 3M2S146T` | fgbio read structure of the two reads.                                                                                                                                                                                                  |
-| `--umis`                              |                     | Text file of known UMIs (one per line); UMIs are corrected against it. Without it no correction is done.                                                                                                                                |
-| `--target_bed`                        |                     | BED file of target regions; adds the on-target rates to the duplex metrics.                                                                                                                                                             |
-| `--fastq_screen_db`                   |                     | FastQ Screen database folder: the `FastQ_Screen_Genomes` layout of `fastq_screen --get_genomes`, with a `fastq_screen.conf`. FastQ Screen is skipped without it. `tests/scripts/build_fastq_screen_db.sh` builds a small one for tests. |
-| `--run_qualimap`                      | `false`             | Run Qualimap (resource-intensive).                                                                                                                                                                                                      |
-| `--output_read_info`                  | `false`             | Write the read info table (`QC/read_info`) and compute the duplex metrics from it instead of from the BAM.                                                                                                                              |
-| `--markdup_duplex_umi`                | `true`              | Mark duplicates per duplex molecule (the UMIs `A-B` and `B-A` of the two strands count as one). Turn it off for single-UMI read structures, or to mark per strand as release 0.1.0 does.                                                |
-| `--multiqc_config`, `--multiqc_title` |                     | A MultiQC config that is applied on top of the packaged one, and a report title.                                                                                                                                                        |
+| Parameter                             | Default             | Description                                                                                                                                                                                                                                                          |
+| ------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--merge_lanes`                       | `false`             | The rows of a sample in the samplesheet are its lanes: merge them (see above).                                                                                                                                                                                       |
+| `--input`, `--outdir`                 |                     | The samplesheet and the output directory (`results`).                                                                                                                                                                                                                |
+| `--fasta`                             |                     | Reference genome FASTA (may be gzipped). `--fasta_fai`, `--dict` and `--bwa` take indexes that already exist.                                                                                                                                                        |
+| `--read_structure`                    | `3M2S146T 3M2S146T` | fgbio read structure of the two reads.                                                                                                                                                                                                                               |
+| `--umis`                              |                     | Text file of known UMIs (one per line); UMIs are corrected against it. Without it no correction is done.                                                                                                                                                             |
+| `--target_bed`                        |                     | BED file of target regions; adds the on-target rates to the duplex metrics and restricts variant calling to the regions.                                                                                                                                             |
+| `--fastq_screen_db`                   |                     | FastQ Screen database folder: the `FastQ_Screen_Genomes` layout of `fastq_screen --get_genomes`, with a `fastq_screen.conf`. FastQ Screen is skipped without it. `tests/scripts/build_fastq_screen_db.sh` builds a small one for tests.                              |
+| `--run_qualimap`                      | `false`             | Run Qualimap (resource-intensive).                                                                                                                                                                                                                                   |
+| `--output_read_info`                  | `false`             | Write the read info table (`QC/read_info`) and compute the duplex metrics from it instead of from the BAM.                                                                                                                                                           |
+| `--markdup_duplex_umi`                | `true`              | Mark duplicates per duplex molecule (the UMIs `A-B` and `B-A` of the two strands count as one). Turn it off for single-UMI read structures, or to mark per strand as release 0.1.0 does.                                                                             |
+| `--variant_caller`                    | `pileup`            | `pileup` (bcftools mpileup and `bin/filter_pileup.py`) or `nvc`, the naive variant caller of release 0.1.0, which is much slower on samples with many off-target reads. Both write the same VCF fields; see [Variant calling](#variant-calling) for the differences. |
+| `--multiqc_config`, `--multiqc_title` |                     | A MultiQC config that is applied on top of the packaged one, and a report title.                                                                                                                                                                                     |
 
 The consensus calling and filtering options (`--min_reads`, `--min_base_quality`, ...) and the variant calling options
 (`--min_reads2`, `--ploidy`) keep the names and defaults of `config/config.yaml`; `ref` is now `--fasta`, and
-`FastqScreen_config` is now `--fastq_screen_db`. varscan is not implemented, only nvc.
+`FastqScreen_config` is now `--fastq_screen_db`. varscan is not implemented.
 
 ### FastQ Screen database
 
@@ -117,6 +119,29 @@ repository shows the `DATABASE` lines. Give the index paths relative to the fold
 `DATABASE	Human	FastQ_Screen_Genomes/Human/Homo_sapiens.GRCh38`) or as absolute paths that are visible inside the container. The
 config of the folder is the one used, so keep one folder per set of genomes.
 
+### Variant calling
+
+The default caller (`--variant_caller pileup`) runs bcftools mpileup with the counting rules of nvc: every read with a
+mapping quality of at least `--min_mapq` and every base quality count, without BAQ, read-pair overlap detection (ClipBam
+has clipped the overlaps) or a depth cap. `bin/filter_pileup.py` merges the nucleotide and indel records of each position
+and writes the record nvc followed by `bin/filter_vcf.py` writes: the alleles with at least `--min_reads2` reads, REF
+extended over the longest deletion, the ALT alleles ordered as nvc orders them, INFO `AC`, `AF` and `DP`, and FORMAT `GT`,
+`AC`, `AF`, `NC` and `DP`. On the test reads it gives the positions, REF, GT, nucleotide counts and allele frequencies of
+nvc, with these differences:
+
+- N alleles are left out wherever they are. `filter_vcf.py` only removes an ALT allele that is exactly `N`, so after nvc an
+  N call next to a deletion (`NT`, ...) stays in ALT, INFO `AC` and `AF`. It also leaves the N values in FORMAT `AC` and
+  `AF`, which then no longer match ALT; here they match ALT. The `GT` index is over the ALT alleles that are written (`.`
+  when the most supported allele is N).
+- An indel is only looked at when at least `--min_reads2` reads have it (mpileup `--min-ireads`), so indels with fewer
+  reads are not in `NC`, and an insertion with fewer reads is not in `DP` (nvc counts insertions in `DP`).
+- mpileup finds indels by realigning the reads, where nvc takes them from the CIGAR; the counts can differ by a read.
+- The `NC` entries are sorted, and the header has `##contig` lines and an INFO `DP` line.
+
+With `--target_bed`, mpileup only looks at the target regions, and nvc is given only the reads that overlap them (its run
+time grows with the number of separately covered stretches of the genome, so off-target reads such as chimeric read
+pairs make it very slow); both then report only positions in the regions.
+
 ## Outputs
 
 | Directory         | Content                                                                                                                                                                                                                           |
@@ -125,7 +150,7 @@ config of the folder is the one used, so keep one folder per set of genomes.
 | `mapped_bams/`    | `<sample>_mapped_merged.bam`: the aligned BAM with the UMI tags.                                                                                                                                                                  |
 | `grouped_by_umi/` | The BAM grouped by UMI and the family size histogram.                                                                                                                                                                             |
 | `consensus/`      | The duplex consensus reads: unmapped, mapped, filtered (`_filtered.bam`) and clipped for variant calling (`_filtered_clipped.bam`).                                                                                               |
-| `variants/`       | `<sample>.vcf` from nvc and `<sample>_filtered.vcf`.                                                                                                                                                                              |
+| `variants/`       | `<sample>_filtered.vcf`, the variant calls, and the raw calls: `<sample>.pileup.vcf.gz` (the mpileup records of the candidate positions) or, with `--variant_caller nvc`, `<sample>.vcf` from nvc.                                |
 | `QC/`             | FastQC, FastQ Screen, MarkDuplicates metrics, samtools, Qualimap, `mosdepth/` (coverage of the duplex reads), `duplex_metrics/` and, with `--output_read_info`, `read_info/`. The consensus reads have their own `QC/consensus/`. |
 | `QC/multiqc/`     | The MultiQC report (`multiqc_report.html`).                                                                                                                                                                                       |
 | `pipeline_info/`  | Tool versions (`software_versions.yml`), the execution report, timeline, trace and DAG.                                                                                                                                           |

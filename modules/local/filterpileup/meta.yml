@@ -1,0 +1,67 @@
+name: filterpileup
+description: |
+  Turns the mpileup records of the candidate variant positions (BCFTOOLS_PILEUP) into the VCF that nvc and
+  `bin/filter_vcf.py` write, with `bin/filter_pileup.py`: the records of a position are merged into one, the alleles
+  with fewer reads than `--min_support_depth` are dropped, N alleles are left out, and the nvc fields (AC, AF; GT, AC,
+  AF, NC) and the read depth (DP) are written. The options are set with `task.ext.args`.
+keywords:
+  - vcf
+  - filter
+  - pileup
+  - nvc
+tools:
+  - filter_pileup.py:
+      description: Script of this pipeline (bin/filter_pileup.py) that turns mpileup records into an nvc-style VCF
+      tool_dev_url: https://github.com/WEHIGenomicsRnD/duplex-seq-pipeline/blob/main/bin/filter_pileup.py
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - vcf:
+        type: file
+        description: Gzipped VCF written by BCFTOOLS_PILEUP
+        pattern: "*.vcf.gz"
+        ontologies:
+          - edam: "http://edamontology.org/format_3016"
+output:
+  vcf:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*_filtered.vcf":
+          type: file
+          description: VCF with the variant calls
+          pattern: "*_filtered.vcf"
+          ontologies:
+            - edam: "http://edamontology.org/format_3016"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - 'python3 --version | sed "s/Python //"':
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - 'python3 --version | sed "s/Python //"':
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@mcmero"
+maintainers:
+  - "@mcmero"

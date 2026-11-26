@@ -206,7 +206,8 @@
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
-                    "description": "BED file of target regions for calculating the on-target rate in capture experiments. Not passed to calc-duplex-metrics when unset."
+                    "description": "BED file of target regions for calculating the on-target rate in capture experiments. Not passed to calc-duplex-metrics when unset.",
+                    "help_text": "Variant calling is also restricted to these regions: the pileup caller only looks at positions in them, and nvc only gets the reads that overlap them (and only its calls in them are kept). Variants are called genome-wide when unset."
                 },
                 "output_read_info": {
                     "type": "boolean",
@@ -256,6 +257,12 @@
             "fa_icon": "fas fa-bug",
             "description": "Duplex variant calling.",
             "properties": {
+                "variant_caller": {
+                    "type": "string",
+                    "default": "pileup",
+                    "enum": ["pileup", "nvc"],
+                    "description": "Variant caller: 'pileup' (bcftools mpileup and bin/filter_pileup.py) or 'nvc' (the naive variant caller of the Snakemake pipeline, much slower on samples with many off-target reads)."
+                },
                 "min_reads2": {
                     "type": "integer",
                     "default": 2,
@@ -263,8 +270,8 @@
                 },
                 "ploidy": {
                     "type": "integer",
-                    "default": 1,
-                    "description": "Ploidy for the naive variant caller (nvc)."
+                    "default": 2,
+                    "description": "Ploidy of the genotype (GT) written by the variant caller."
                 }
             }
         },

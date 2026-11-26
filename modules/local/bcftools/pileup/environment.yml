@@ -1,0 +1,6 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::bcftools=1.25
+  - bioconda::htslib=1.25

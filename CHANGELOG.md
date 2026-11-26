@@ -3,6 +3,24 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- A pileup variant caller, now the default (`--variant_caller pileup`): bcftools mpileup (local module `BCFTOOLS_PILEUP`)
+  and `bin/filter_pileup.py` (`FILTER_PILEUP`), which counts and reports the alleles as nvc and `filter_vcf.py` do. The
+  differences are listed in the README. `--variant_caller nvc` runs nvc as before.
+
+### Changed
+
+- `--target_bed` also restricts variant calling to the target regions. With nvc, the clipped consensus reads are first
+  subset to the reads that overlap the targets (nf-core `samtools/view`), and `filter_vcf.py --regions` keeps the calls in
+  the regions. nvc's run time grows with the number of separately covered stretches of each chromosome, so samples with
+  many off-target (chimeric) read pairs took up to 24 h and more genome-wide.
+- nvc counts in `uint32` arrays (`--coverage_dtype=uint32`) instead of `uint64`.
+- `--ploidy` also sets the genotype of the pileup caller.
+- `--ploidy` defaults to 2 (diploid) instead of 1.
+
 ## [0.2.0] - 2026-11-25
 
 The Nextflow rewrite of the pipeline. The Snakemake pipeline (release 0.1.0) is no longer in the repository; it stays

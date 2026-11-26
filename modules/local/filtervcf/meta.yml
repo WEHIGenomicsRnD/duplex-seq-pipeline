@@ -2,7 +2,7 @@ name: filtervcf
 description: |
   Post-processes the VCF written by nvc with `bin/filter_vcf.py`: records whose only ALT allele is N are dropped, an N
   allele is removed from multi-allelic records together with its AC and AF values, and the read depth (DP) is added to
-  the INFO and sample columns (with a FORMAT header line).
+  the INFO and sample columns (with a FORMAT header line). With a BED file only the records in its regions are kept.
 keywords:
   - vcf
   - filter
@@ -25,6 +25,12 @@ input:
         pattern: "*.vcf"
         ontologies:
           - edam: "http://edamontology.org/format_3016"
+  - regions:
+      type: file
+      description: Optional BED file; only the records at positions in its regions are kept
+      pattern: "*.bed"
+      ontologies:
+        - edam: "http://edamontology.org/format_3003"
 output:
   vcf:
     - - meta:
