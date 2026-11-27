@@ -85,11 +85,15 @@ workflow DUPLEXSEQ {
         params.max_base_error_rate,
     )
 
-    // variant calling on the filtered consensus reads
+    // variant calling on the filtered consensus reads, restricted to the targets when a BED file is given
+    ch_target_bed = params.target_bed ? file(params.target_bed, checkIfExists: true) : []
     VARIANT_CALLING(
         CONSENSUS.out.filtered_bam_bai.map { meta, bam, _bai -> [meta, bam] },
         ch_fasta_fai,
         ch_fasta_fai_dict,
+        ch_target_bed,
+        params.variant_calling_padding,
+        params.variant_caller,
     )
 
     // QC and a single MultiQC report; FastQ Screen only runs when a database folder is given
@@ -101,7 +105,6 @@ workflow DUPLEXSEQ {
     ch_multiqc_config = params.multiqc_config
         ? [file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true), file(params.multiqc_config, checkIfExists: true)]
         : file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true)
-    ch_target_bed = params.target_bed ? file(params.target_bed, checkIfExists: true) : []
 
     QC(
         ch_reads,

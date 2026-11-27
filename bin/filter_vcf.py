@@ -13,9 +13,13 @@ A FORMAT header line declaring DP is added to the header. The read depth is the 
 of the per-nucleotide counts that nvc writes in the last field of the sample column;
 the deletion counts are not included. Only the first sample is annotated, as nvc
 writes a single sample.
+
+With --regions, only the records whose position is in one of the regions of a BED file are
+written (nvc is run on the reads that overlap them, which also cover nearby positions).
 """
 
 from argparse import ArgumentParser
+from bisect import bisect_right
 
 # 0-based indices of the VCF columns used below
 ALT_COLUMN = 4
@@ -38,7 +42,43 @@ def parse_args():
     parser.add_argument(
         "output_vcf", metavar="OUTPUT_VCF", help="Filtered VCF with DP added."
     )
+    parser.add_argument(
+        "--regions",
+        metavar="BED",
+        help="BED file of the regions to keep the records of (default: all records).",
+    )
     return parser.parse_args()
+
+
+def read_regions(bed):
+    """Read a BED file into sorted, merged 0-based half-open intervals per chromosome."""
+    intervals = {}
+    with open(bed) as bed_in:
+        for line in bed_in:
+            if not line.strip() or line.startswith(("#", "track", "browser")):
+                continue
+            chrom, start, end = line.split("\t")[:3]
+            intervals.setdefault(chrom, []).append((int(start), int(end)))
+
+    regions = {}
+    for chrom, chrom_intervals in intervals.items():
+        merged = []
+        for start, end in sorted(chrom_intervals):
+            if merged and start <= merged[-1][1]:
+                merged[-1][1] = max(merged[-1][1], end)
+            else:
+                merged.append([start, end])
+        regions[chrom] = ([start for start, _ in merged], [end for _, end in merged])
+    return regions
+
+
+def in_regions(regions, chrom, pos):
+    """Whether the 1-based position is in one of the regions."""
+    if chrom not in regions:
+        return False
+    starts, ends = regions[chrom]
+    i = bisect_right(starts, pos - 1) - 1
+    return i >= 0 and pos - 1 < ends[i]
 
 
 def sum_read_depth(sample_column):
@@ -90,9 +130,10 @@ def add_read_depth(fields):
     fields[SAMPLE_COLUMN] += f":{depth}"
 
 
-def filter_vcf(input_vcf, output_vcf):
+def filter_vcf(input_vcf, output_vcf, regions_bed=None):
     """Write a copy of the VCF with N alleles removed and DP added."""
     dp_header_written = False
+    regions = read_regions(regions_bed) if regions_bed else None
 
     with open(input_vcf) as vcf_in, open(output_vcf, "w") as vcf_out:
         for line_number, line in enumerate(vcf_in, start=1):
@@ -117,6 +158,9 @@ def filter_vcf(input_vcf, output_vcf):
                     f"{SAMPLE_COLUMN + 1} tab-separated columns, got {len(fields)}"
                 )
 
+            if regions is not None and not in_regions(regions, fields[0], int(fields[1])):
+                continue
+
             # nothing is left of a record that only has N alleles
             if set(fields[ALT_COLUMN].split(",")) == {"N"}:
                 continue
@@ -128,7 +172,7 @@ def filter_vcf(input_vcf, output_vcf):
 
 def main():
     args = parse_args()
-    filter_vcf(args.input_vcf, args.output_vcf)
+    filter_vcf(args.input_vcf, args.output_vcf, args.regions)
 
 
 if __name__ == "__main__":

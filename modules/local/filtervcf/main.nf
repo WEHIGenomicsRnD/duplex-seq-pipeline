@@ -8,6 +8,7 @@ process FILTER_VCF {
 
     input:
     tuple val(meta), path(vcf)
+    path regions
 
     output:
     tuple val(meta), path("*_filtered.vcf"), emit: vcf
@@ -18,8 +19,9 @@ process FILTER_VCF {
 
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def regions_cmd = regions ? "--regions ${regions}" : ''
     """
-    filter_vcf.py ${vcf} ${prefix}_filtered.vcf
+    filter_vcf.py ${regions_cmd} ${vcf} ${prefix}_filtered.vcf
     """
 
     stub:
