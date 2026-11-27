@@ -38,6 +38,38 @@ workflow PIPELINE_INITIALISATION {
 }
 
 //
+// The read length (rlen) and the number of non-template bases (skips: UMI, skipped and barcode bases) of
+// a read structure such as '3M2S146T 3M2S146T', for calc-duplex-metrics: [ rlen: 151, skips: 5 ]. The
+// tool takes one value of each, so each is the mean over the two reads, rounded; a single read structure
+// is used for both reads. A value is null when a variable-length segment (+) makes it unknown: rlen for
+// +T, both for a + UMI, skipped or barcode segment.
+//
+def readStructureLengths(read_structure) {
+    def reads = read_structure
+        .trim()
+        .split(/\s+/)
+        .collect { read ->
+            def segments = (read =~ /(\d+|\+)([BMST])/).collect { _match, length, type -> [length, type] }
+            def non_template = segments.findAll { _length, type -> type != 'T' }
+            [
+                rlen: segments.every { length, _type -> length != '+' } ? segments.sum { length, _type -> length as int } : null,
+                skips: non_template.every { length, _type -> length != '+' } ? (non_template.sum { length, _type -> length as int } ?: 0) : null,
+            ]
+        }
+    return [
+        rlen: roundedMean(reads.collect { read -> read.rlen }),
+        skips: roundedMean(reads.collect { read -> read.skips }),
+    ]
+}
+
+//
+// The mean of the values, rounded (a .5 rounds up), or null if any value is null
+//
+def roundedMean(values) {
+    return values.every { value -> value != null } ? Math.round((values.sum() as double) / values.size()) as int : null
+}
+
+//
 // The lane and the read of a FASTQ file name such as sample_L001_R1.fastq.gz (the bcl2fastq form
 // sample_S1_L001_R1_001.fastq.gz works too): [ lane: 1, read: 1 ], or null if the name has no lane
 //

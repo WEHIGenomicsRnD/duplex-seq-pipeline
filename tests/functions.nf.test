@@ -1,0 +1,119 @@
+nextflow_function {
+
+    name "Test the read lengths that calc-duplex-metrics gets from a read structure"
+    script "subworkflows/local/utils_pipeline/main.nf"
+    function "readStructureLengths"
+
+    test("NanoSeq read structure") {
+
+        when {
+            function {
+                """
+                input[0] = '3M2S146T 3M2S146T'
+                """
+            }
+        }
+
+        then {
+            assert function.success
+            assert function.result == [rlen: 151, skips: 5]
+        }
+    }
+
+    test("xGen read structure") {
+
+        when {
+            function {
+                """
+                input[0] = '8M143T 8M143T'
+                """
+            }
+        }
+
+        then {
+            assert function.success
+            assert function.result == [rlen: 151, skips: 8]
+        }
+    }
+
+    test("One read structure for both reads") {
+
+        when {
+            function {
+                """
+                input[0] = '8M142T'
+                """
+            }
+        }
+
+        then {
+            assert function.success
+            assert function.result == [rlen: 150, skips: 8]
+        }
+    }
+
+    test("UMI on one read only: the mean of the two reads") {
+
+        when {
+            function {
+                """
+                input[0] = '8M143T 151T'
+                """
+            }
+        }
+
+        then {
+            assert function.success
+            assert function.result == [rlen: 151, skips: 4]
+        }
+    }
+
+    test("A rounded mean") {
+
+        when {
+            function {
+                """
+                input[0] = '3M2S146T 8M143T'
+                """
+            }
+        }
+
+        then {
+            assert function.success
+            // skips 5 and 8: 6.5 rounds up
+            assert function.result == [rlen: 151, skips: 7]
+        }
+    }
+
+    test("Variable-length template: no read length") {
+
+        when {
+            function {
+                """
+                input[0] = '3M2S+T 3M2S+T'
+                """
+            }
+        }
+
+        then {
+            assert function.success
+            assert function.result == [rlen: null, skips: 5]
+        }
+    }
+
+    test("Variable-length UMI: no read length or skips") {
+
+        when {
+            function {
+                """
+                input[0] = '3M2S146T +M'
+                """
+            }
+        }
+
+        then {
+            assert function.success
+            assert function.result == [rlen: null, skips: null]
+        }
+    }
+}

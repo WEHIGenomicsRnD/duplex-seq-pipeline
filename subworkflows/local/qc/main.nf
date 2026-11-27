@@ -18,6 +18,7 @@ include { MOSDEPTH } from '../../../modules/nf-core/mosdepth/main'
 include { GET_READ_INFO } from '../../../modules/local/getreadinfo/main'
 include { CALC_DUPLEX_METRICS } from '../../../modules/local/calcduplexmetrics/main'
 include { MULTIQC } from '../../../modules/nf-core/multiqc/main'
+include { readStructureLengths } from '../utils_pipeline/main'
 
 workflow QC {
     take:
@@ -61,8 +62,9 @@ workflow QC {
         ch_duplex_metrics_input = ch_mapped_bam
     }
 
+    // calc-duplex-metrics' --rlen and --skips follow the sample's read structure (conf/modules.config)
     CALC_DUPLEX_METRICS(
-        ch_duplex_metrics_input,
+        ch_duplex_metrics_input.map { meta, input -> [meta + [duplex_lengths: readStructureLengths(meta.read_structure)], input] },
         fasta_fai.map { meta, fasta, _fai -> [meta, fasta] },
         target_bed,
         output_read_info ? 'rinfo' : 'bam',
