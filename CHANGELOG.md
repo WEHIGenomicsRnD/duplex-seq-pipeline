@@ -10,6 +10,7 @@ All notable changes to this project are documented here. The format follows
 - A pileup variant caller, now the default (`--variant_caller pileup`): bcftools mpileup (local module `BCFTOOLS_PILEUP`)
   and `bin/filter_pileup.py` (`FILTER_PILEUP`), which counts and reports the alleles as nvc and `filter_vcf.py` do. The
   differences are listed in the README. `--variant_caller nvc` runs nvc as before.
+- `tower.yml`, so the MultiQC report can be viewed in the Reports tab of a Seqera Platform run.
 
 ### Changed
 
@@ -22,7 +23,13 @@ All notable changes to this project are documented here. The format follows
 - nvc counts in `uint32` arrays (`--coverage_dtype=uint32`) instead of `uint64`.
 - `--ploidy` also sets the genotype of the pileup caller.
 - `--ploidy` defaults to 2 (diploid) instead of 1.
-- `tower.yml`, so the MultiQC report can be viewed in the Reports tab of a Seqera Platform run.
+
+### Fixed
+
+- calc-duplex-metrics gets `--skips` (UMI, skipped and barcode bases per read) and `--rlen` (read length) from each
+  sample's read structure, each the mean over the two reads, rounded. It used the NanoSeq defaults (5 and 151) for every
+  sample, which made the efficiency and GC metrics wrong for other read structures (e.g. `8M143T`: skips 8). A
+  variable-length segment (`+`) leaves the value it makes unknown at the tool's default.
 
 ## [0.2.0] - 2026-11-25
 
